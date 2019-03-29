@@ -23,9 +23,8 @@ def thread_decorator(action_def):
     return action
 
 class main_gui():
-    def __init__(self, username, password, link_type):
-        self.username = username
-        self.password = password
+    def __init__(self, link_data, link_type):
+        self.link_data = link_data
         self.link_type = link_type
         self.log_path = os.path.dirname(os.path.realpath(__file__))+"\\log"
         self.exec_date = datetime.datetime.now().strftime('%Y%m%d')
@@ -98,7 +97,7 @@ class main_gui():
             if self.link_type == 'hue':
                 button_explain.SetLabel("校验...")
                 sql = text_sql.GetValue()
-                query_hue = link_hue.query_hue(username=self.username, password=self.password, query_name=query_name, log_path=self.log_path)
+                query_hue = link_hue.query_hue(hue_data=self.link_data, query_name=query_name, log_path=self.log_path)
                 query_hue.explain(sql)
                 time.sleep(1)
                 button_explain.SetLabel("校验")
@@ -127,13 +126,12 @@ class main_gui():
 
             # 执行预设
             if self.link_type == 'hue':
-                query_mqt = link_hue.query_hue(username=self.username, password=self.password, query_name=query_name, log_path=self.log_path)
+                query_mqt = link_hue.query_hue(hue_data=self.link_data, query_name=query_name, log_path=self.log_path)
             elif self.link_type == 'redash':
-                query_mqt = link_redash.query_redash(username=self.username, password=self.password, query_name=query_name, log_path=self.log_path)
+                query_mqt = link_redash.query_redash(redash_data=self.link_data, query_name=query_name, log_path=self.log_path)
             else:
                 exit(1)
             query_mqt.login()
-
             start_time = datetime.datetime.now()
             cnt_num = 0
             # 此处的date_format与输入的时间格式一致，如果后期输入的日期格式固定，这里就需要先对start_date/end_date处理成date_format格式（果）
@@ -201,9 +199,9 @@ class main_gui():
                 file_name = '{0}_{1}_{2}'.format(self.link_type.lower(), query_name, self.exec_date)
             cancel_list = []
             if self.link_type == 'hue':
-                query_mqt = link_hue.query_hue(username=self.username, password=self.password, query_name=query_name, log_path=self.log_path)
+                query_mqt = link_hue.query_hue(hue_data=self.link_data, query_name=query_name, log_path=self.log_path)
             elif self.link_type == 'redash':
-                query_mqt = link_redash.query_redash(username=self.username, password=self.password, query_name=query_name, log_path=self.log_path)
+                query_mqt = link_redash.query_redash(redash_data=self.link_data, query_name=query_name, log_path=self.log_path)
             else:
                 exit(1)
             query_mqt.login()
@@ -228,19 +226,23 @@ class main_gui():
                             cancel_list.append(i)
                 time.sleep(2)
             button_cancel.SetLabel('自杀')
-            dialog_close = wx.MessageDialog(None, message="SQL已自杀完毕！！！", caption="提醒", style=wx.OK | wx.ICON_WARNING)
+            dialog_close = wx.MessageDialog(None, message="SQL已自杀完毕！！！", caption="提醒",
+                                            style=wx.OK | wx.ICON_WARNING)
             dialog_close.ShowModal()
 
         def is_close(event):
             """主框架窗口关闭提醒"""
             message_list = [
-                "醉不成欢惨将别,别时茫茫江浸月 \n                                           ——白居易",
-                "天下伤心处，劳劳送客亭 \n                                           ——李白",
-                "丈夫非无泪,不洒离别间 \n                                           ——陆龟蒙",
-                "一曲离歌两行泪，不知何地再逢君 \n                                           ——韦庄",
-                "人生不相见，动如参与商 \n                                           ——杜甫",
+                "醉不成欢惨将别,别时茫茫江浸月 \n                                           —— 白居易",
+                "天下伤心处，劳劳送客亭 \n                                           —— 李白",
+                "丈夫非无泪,不洒离别间 \n                                           —— 陆龟蒙",
+                "一曲离歌两行泪，不知何地再逢君 \n                                           —— 韦庄",
+                "人生不相见，动如参与商 \n                                           —— 杜甫",
+                "仰天大笑出门去，我辈岂是蓬蒿人 \n                                           —— 李白",
+                "弃我去者，昨日之日不可留 \n                                           —— 李白"
             ]
-            dialog_close = wx.MessageDialog(None, message=message_list[int(random.random()*5)], caption="关闭", style=wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING)
+            dialog_close = wx.MessageDialog(None, message=message_list[int(random.random()*5)], caption="关闭",
+                                            style=wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING)
             ret = dialog_close.ShowModal()
             if ret == wx.ID_YES:
                 main_frame.Destroy()
@@ -325,10 +327,6 @@ class main_gui():
         main_frame.Show()
         mgt.MainLoop()
 
-# main_app(username='wangqiang', password='wangqiang1234')
-# exit()
-
-
 
 if __name__ == '__main__':
     # 变量预设
@@ -339,7 +337,7 @@ if __name__ == '__main__':
         link_info.read('link_info.ini')
 
     login_app = wx.App()
-    login_frame = wx.Frame(None, title='MQT Login', size=(320, 220), style=wx.CAPTION | wx.CLOSE_BOX)
+    login_frame = wx.Frame(None, title='MQT Login', size=(320, 250), style=wx.CAPTION | wx.CLOSE_BOX)
     login_frame.SetIcon(wx.Icon('mqt.ico'))
     login_frame.SetBackgroundColour("#FFFFFF")
     login_frame.Center()
@@ -351,6 +349,9 @@ if __name__ == '__main__':
     label_password = wx.StaticText(login_panel, label='Password:', size=(70, 30))
     text_password = wx.TextCtrl(login_panel, style=wx.TE_PASSWORD)
     text_password.SetForegroundColour("#9e9e9e")
+    label_host = wx.StaticText(login_panel, label='Host:', size=(70, 30))
+    text_host = wx.TextCtrl(login_panel)
+    text_host.SetForegroundColour("#9e9e9e")
     button_login = wx.Button(login_panel, label='Login', size=(100, 30), style=wx.BORDER_MASK)
     button_login.SetBackgroundColour("#338BB8")
     button_login.SetForegroundColour("#FFFFFF")
@@ -363,7 +364,8 @@ if __name__ == '__main__':
         """LinkType 进行选择时自动填写账号密码"""
         link_type = combobox_link_type.GetValue()
         link_data = dict(link_info.items(link_type))
-        if 'username' in link_data.keys() and 'password' in link_data.keys():
+        if link_data['ip'] != '' and link_data['username'] != '' and link_data['password'] != '':
+            text_host.SetValue(link_data['ip'])
             text_username.SetValue(link_data['username'])
             text_password.SetValue(link_data['password'])
             check_remeber.SetValue(True)
@@ -414,6 +416,7 @@ if __name__ == '__main__':
         link_data = dict(link_info.items(link_type))
         link_data['username'] = text_username.GetValue()
         link_data['password'] = text_password.GetValue()
+        link_data['ip'] = text_host.GetValue()
 
         if link_type in link_type_list:
             if link_type == 'hue':
@@ -431,14 +434,15 @@ if __name__ == '__main__':
                 print('{0}连接成功'.format(link_type))
                 print(link_mqt.login())
                 if check_remeber.GetValue() is True:
-                    login_info = open(login_info_file, 'w')
-                    login_info.write(common_func.encryption("{0}T@_@T{1}".format(username, password)))
-                    login_info.close()
+                    link_info.set(link_type, 'ip', text_host.GetValue())
+                    link_info.set(link_type, 'username', common_func.encryption(text_username.GetValue()))
+                    link_info.set(link_type, 'password', common_func.encryption(text_password.GetValue()))
+                    link_info.write(open('link_info.ini', 'r+', encoding="utf-8"))
                 login_frame.Destroy()
-                main = main_gui(username, password, link_type)
+                main = main_gui(link_data, link_type)
                 main.main_app()
             else:
-                login_error(" Error: Invalid Username or Password ")
+                login_error(" Error: Invalid Username or Password or Host")
         else:
             login_error(" Error: Invalid LinkType ")
 
@@ -456,12 +460,16 @@ if __name__ == '__main__':
     h_box2 = wx.BoxSizer()
     h_box2.Add(label_password, flag=wx.ALL, border=2)
     h_box2.Add(text_password)
+    h_box4 = wx.BoxSizer()
+    h_box4.Add(label_host, flag=wx.ALL, border=2)
+    h_box4.Add(text_host)
     h_box3 = wx.BoxSizer()
     h_box3.Add(combobox_link_type, flag=wx.RIGHT, border=10)
     h_box3.Add(check_remeber, flag=wx.LEFT, border=10)
     v_box1 = wx.BoxSizer(wx.VERTICAL)
     v_box1.Add(h_box1, flag=wx.ALIGN_CENTER_HORIZONTAL)
     v_box1.Add(h_box2, flag=wx.ALIGN_CENTER_HORIZONTAL)
+    v_box1.Add(h_box4, flag=wx.ALIGN_CENTER_HORIZONTAL)
     v_box1.Add(h_box3, flag=wx.ALIGN_CENTER_HORIZONTAL)
     v_box1.Add(button_login, flag=wx.ALIGN_CENTER_HORIZONTAL)
     v_box2 = wx.BoxSizer(wx.VERTICAL)

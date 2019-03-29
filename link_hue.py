@@ -26,7 +26,6 @@ class query_hue():
         """
         # 声明参数
         self.exec_date = datetime.datetime.now().strftime('%Y%m%d')
-        self.host = re.findall('/(.*)', hue_data['ip'], 1)
         # 登录前的csrf中间token值 csrfmiddlewaretoken
         self.csrf_url = hue_data['ip'] + hue_data['csrf_path']
         # csrf的token值
@@ -51,21 +50,18 @@ class query_hue():
         }
         self.csrf_headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-            "Host": self.host,
             "Origin": hue_data['ip'],
             "Referer": self.csrf_url,
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
         }
         self.execute_headers = {
             "Accept": "application/json, text/javascript, */*; q=0.01",
-            "Host": self.host,
             "Origin": hue_data['ip'],
             "Referer": hue_data['ip'] + hue_data['beeswax_path'],
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
         }
         self.download_headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-            "Host": self.host,
             "Upgrade-Insecure-Requests": "1",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
         }
