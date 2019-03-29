@@ -202,9 +202,11 @@ class query_redash():
 
 # import configparser
 # link_info = configparser.ConfigParser()
-# link_info.read('link_info.ini')
+# link_info.read(os.getcwd()+'/gui/link_info.ini')
 # redash_data = dict(link_info.items('redash'))
-#
+# redash_data['ip'] = ''
+# redash_data['username'] = ''
+# redash_data['password'] = ''
 # redash = query_redash(redash_data, '123')
 # redash.login()
 # redash.query_thread('select 123', '2018-12-12', '2018-12-12', 1, '%Y-%m-%d', 'day', 2, 'C:\\Users\\ernes\\Desktop')

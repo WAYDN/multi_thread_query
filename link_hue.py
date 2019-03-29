@@ -317,8 +317,10 @@ class query_hue():
 
 # import configparser
 # link_info = configparser.ConfigParser()
-# link_info.read('link_info.ini')
+# link_info.read(os.getcwd()+'/gui/link_info.ini')
 # hue_data = dict(link_info.items('hue'))
-#
+# hue_data['ip'] = ''
+# hue_data['username'] = ''
+# hue_data['password'] = ''
 # hue = query_hue(hue_data, '123')
 # hue.query_thread('select 123', '2018-12-12', '2018-12-12', 1, '%Y-%m-%d', 'day', 2, 'C:\\Users\\ernes\\Desktop')
