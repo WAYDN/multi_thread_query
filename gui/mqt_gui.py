@@ -366,8 +366,8 @@ if __name__ == '__main__':
         link_data = dict(link_info.items(link_type))
         if link_data['ip'] != '' and link_data['username'] != '' and link_data['password'] != '':
             text_host.SetValue(link_data['ip'])
-            text_username.SetValue(link_data['username'])
-            text_password.SetValue(link_data['password'])
+            text_username.SetValue(common_func.encryption(link_data['username'], 0))
+            text_password.SetValue(common_func.encryption(link_data['password'], 0))
             check_remeber.SetValue(True)
         else:
             pass
@@ -435,8 +435,8 @@ if __name__ == '__main__':
                 print(link_mqt.login())
                 if check_remeber.GetValue() is True:
                     link_info.set(link_type, 'ip', text_host.GetValue())
-                    link_info.set(link_type, 'username', common_func.encryption(text_username.GetValue()))
-                    link_info.set(link_type, 'password', common_func.encryption(text_password.GetValue()))
+                    link_info.set(link_type, 'username', common_func.encryption(text_username.GetValue(), 1))
+                    link_info.set(link_type, 'password', common_func.encryption(text_password.GetValue(), 1))
                     link_info.write(open('link_info.ini', 'r+', encoding="utf-8"))
                 login_frame.Destroy()
                 main = main_gui(link_data, link_type)
