@@ -1,7 +1,6 @@
-# multi_thread_query
+![mqt](https://github.com/WAYDN/multi_thread_query/blob/master/gui/mqt.ico)# multi_thread_query
 Multi-threaded query tool to reduce the mechanical operation of repeatedly submitting query statements.
 
-![mqt](https://github.com/WAYDN/multi_thread_query/blob/master/gui/mqt.ico)
 
 #### 开发环境
 python3.6
@@ -34,4 +33,4 @@ python3.6
 
 
 #### 待办事项
-- [ ] -将多线程提交代码改为异步提交
+- [ ] 将多线程提交代码改为异步提交
