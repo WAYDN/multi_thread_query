@@ -8,7 +8,27 @@ Multi-threaded query tool to reduce the mechanical operation of repeatedly submi
 python3.6
 
 #### 目录结构
-markdown-toc
+- .gitignore
+- common_func.py
+- LICENSE         
+- link_hue.py
+- link_redash.py
+- .idea
+    - encodings.xml
+    - misc.xml
+    - modules.xml
+    - multi_thread_query.iml
+    - vcs.xml
+    - workspace.xml
+    - codeStyles
+        - codeStyleConfig.xml
+- gui 
+    - help.png
+    - link_info.ini
+    - mqt.ico
+    - mqt_gui.py
+    - version_info.txt
+    - \_\_init\_\_.py
 
 
 #### 待办事项
