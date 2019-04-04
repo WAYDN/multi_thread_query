@@ -8,7 +8,7 @@ Multi-threaded query tool to reduce the mechanical operation of repeatedly submi
 python3.6
 
 #### 目录结构
-[toc]
+markdown-toc
 
 
 #### 待办事项
