@@ -12,8 +12,8 @@ import logging
 import threading
 
 
-class query_redash():
-    def __init__(self, redash_data, query_name=None, is_log=1, log_path='E:\\pycode36\\log'):
+class QueryRedash:
+    def __init__(self, redash_data, query_name=None, is_log=1, log_path='E:\\log'):
         """
         redash连接信息，及日志打印存放地址
         :param redash_data string/redash执行信息
@@ -49,7 +49,8 @@ class query_redash():
 
         self.headers = {
             'Referer': redash_data['ip'] + redash_data['new_path'],
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3472.3 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) '
+                          'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3472.3 Safari/537.36',
             'Content-Type': 'application/json;charset=UTF-8'
         }
 
@@ -87,7 +88,8 @@ class query_redash():
         result_data = None
 
         # 向服务器提交sql
-        query_results = self.session_opener.post(url=self.query_url, data=json.dumps(self.query_results_data), headers=self.headers)
+        query_results = self.session_opener.post(url=self.query_url, data=json.dumps(self.query_results_data),
+                                                 headers=self.headers)
         # 执行状态判断1:查询等待中 2：查询执行中 3：查询结束并返回结果 4：查询取消或失败
         status = 1
         if query_results.status_code == 200:
@@ -99,19 +101,22 @@ class query_redash():
                     # 获取当前执行状态码
                     status = json.loads(watch_data.content)['job']['status']
                 else:
-                    logging.warning("<result_id:{0}> {1}网络请求返回码:{2}".format(watch_id, exec_date, watch_data.status_code))
+                    logging.warning("<result_id:{0}> {1}网络请求返回码:{2}".
+                                    format(watch_id, exec_date, watch_data.status_code))
                 # 3秒刷新
                 time.sleep(3)
             else:
                 if status == 3:
-                    query_results_data = self.session_opener.get(url=self.results_url.format(json.loads(watch_data.content)['job']['query_result_id']))
+                    query_results_data = self.session_opener.get(
+                        url=self.results_url.format(json.loads(watch_data.content)['job']['query_result_id']))
                     result = json.loads(query_results_data.content)['query_result']['data']
                     result_columns = [i['friendly_name'] for i in result['columns']]
                     result_data = [[i[j] for j in result_columns] for i in result['rows']]
                     logging.info("<result_id:{0}> {1} 执行成功".format(watch_id, exec_date))
                 elif status == 4:
                     logging.warning("<result_id:{0}> {1} 执行失败".format(watch_id, exec_date))
-                    logging.warning("<result_id:{0}> {1} error:{2}".format(watch_id, exec_date, json.loads(watch_data.content)['job']['error']))
+                    logging.warning("<result_id:{0}> {1} error:{2}".
+                                    format(watch_id, exec_date, json.loads(watch_data.content)['job']['error']))
                     self.fail_date.append(exec_date)
         else:
             logging.warning("{0} {1}网络请求返回码:{2}".format(exec_date, self.query_url, query_results.status_code))
@@ -138,8 +143,8 @@ class query_redash():
         end_time = datetime.datetime.now()
         logging.info("<result_id:{0}> {1} 查询耗时:{2}".format(watch_id, exec_date, str(end_time-start_time)))
 
-
-    def query_thread(self, exec_sql, start_date, end_date, step=1, date_format='%Y%m%d', step_type='day', thread_num=2, download_path=None):
+    def query_thread(self, exec_sql, start_date, end_date,
+                     step=1, date_format='%Y%m%d', step_type='day', thread_num=2, download_path=None):
         """
         多线程执行提交sql
         :param start_date: int,string/开始日期
@@ -163,17 +168,20 @@ class query_redash():
         # 声明参数
         cnt_num = 0
         # 此处的date_format与输入的时间格式一致，如果后期输入的日期格式固定，这里就需要先对start_date/end_date处理成date_format格式（果）
-        exec_date_list = common_func.exec_date(start_date=start_date, end_date=end_date, step=step, date_format=date_format, step_type=step_type)
+        exec_date_list = common_func.exec_date(start_date=start_date, end_date=end_date, step=step,
+                                               date_format=date_format, step_type=step_type)
         exec_date_num = len(exec_date_list)
 
         self.login()
         logging.info(exec_sql)
         for exec_date_value in exec_date_list:
             # 此处的date_format与输出的时间格式一致（因）
-            exec_sql_value = common_func.sql_format(exec_sql=exec_sql, exec_date=exec_date_value, date_format=date_format)
-            query_threading = threading.Thread(name=self.file_name, target=self.query, args=(exec_sql_value, download_path, exec_date_value))
+            exec_sql_value = common_func.sql_format(exec_sql=exec_sql, exec_date=exec_date_value,
+                                                    date_format=date_format)
+            query_threading = threading.Thread(name=self.file_name, target=self.query,
+                                               args=(exec_sql_value, download_path, exec_date_value))
             cnt_num = cnt_num + 1
-            logging.info("当前执行日期:{0},提交进度{1}%".format(exec_date_value, round(1.0*cnt_num/exec_date_num*100,2)))
+            logging.info("当前执行日期:{0},提交进度{1}%".format(exec_date_value, round(1.0*cnt_num/exec_date_num*100, 2)))
             query_threading.start()
             if cnt_num % thread_num == 0:
                 query_threading.join()
@@ -200,13 +208,14 @@ class query_redash():
             return 0
 
 
-# import configparser
-# link_info = configparser.ConfigParser()
-# link_info.read(os.getcwd()+'/gui/link_info.ini')
-# redash_data = dict(link_info.items('redash'))
-# redash_data['ip'] = ''
-# redash_data['username'] = ''
-# redash_data['password'] = ''
-# redash = query_redash(redash_data, '123')
-# redash.login()
-# redash.query_thread('select 123', '2018-12-12', '2018-12-12', 1, '%Y-%m-%d', 'day', 2, 'C:\\Users\\ernes\\Desktop')
+if __name__ == '__main__':
+    import configparser
+    link_info = configparser.ConfigParser()
+    link_info.read(os.getcwd()+'/gui/link_info.ini')
+    redash_data = dict(link_info.items('redash'))
+    redash_data['ip'] = ''
+    redash_data['username'] = ''
+    redash_data['password'] = ''
+    redash = QueryRedash(redash_data, '123')
+    redash.login()
+    redash.query_thread('select 123', '2018-12-12', '2018-12-12', 1, '%Y-%m-%d', 'day', 2, 'C:\\Users\\ernes\\Desktop')

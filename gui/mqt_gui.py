@@ -22,7 +22,8 @@ def thread_decorator(action_def):
         tmp.start()
     return action
 
-class main_gui():
+
+class MainGui():
     def __init__(self, link_data, link_type):
         self.link_data = link_data
         self.link_type = link_type
@@ -31,7 +32,8 @@ class main_gui():
 
     def main_app(self):
         mgt = wx.App()
-        main_frame = wx.Frame(None, title='{0}客户端'.format(self.link_type), size=(800, 600), style=wx.DEFAULT_FRAME_STYLE)
+        main_frame = wx.Frame(None, title='{0}客户端'.format(self.link_type), size=(800, 600),
+                              style=wx.DEFAULT_FRAME_STYLE)
         main_frame.SetIcon(wx.Icon('mqt.ico'))
         main_frame.Center()
         main_panel = wx.Panel(main_frame)
@@ -47,8 +49,8 @@ class main_gui():
         label_end_date = wx.StaticText(main_panel, label="结束日期")
         text_end_date = wx.TextCtrl(main_panel, value=yesterday)
         label_date_format = wx.StaticText(main_panel, label="时间格式")
-        comboBox_date_format = wx.ComboBox(main_panel, choices=date_format_list)
-        comboBox_date_format.SetSelection(0)
+        combobox_date_format = wx.ComboBox(main_panel, choices=date_format_list)
+        combobox_date_format.SetSelection(0)
         label_thread_num = wx.StaticText(main_panel, label="   线程数")
         text_thread_num = wx.TextCtrl(main_panel, value="1")
         label_step_type = wx.StaticText(main_panel, label="跨度周期")
@@ -85,9 +87,11 @@ class main_gui():
         # 进度控件
         label_gauge_total = wx.StaticText(main_panel, label="总进度: ")
         gauge_total = wx.Gauge(main_panel, -1, 100)
-        label_value_total = wx.StaticText(main_panel, label="{0}/{1}:{2}%".format(str(0).rjust(3), str(0).ljust(3), str(0.00).rjust(5)))
+        label_value_total = wx.StaticText(main_panel, label="{0}/{1}:{2}%".
+                                          format(str(0).rjust(3), str(0).ljust(3), str(0.00).rjust(5)))
 
-        logging.basicConfig(stream=text_log, format='%(asctime)s [%(levelname)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        logging.basicConfig(stream=text_log, format='%(asctime)s [%(levelname)s]: %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S')
         # logging.warning('123')
 
         def sql_explain(event):
@@ -97,7 +101,7 @@ class main_gui():
             if self.link_type == 'hue':
                 button_explain.SetLabel("校验...")
                 sql = text_sql.GetValue()
-                query_hue = link_hue.query_hue(hue_data=self.link_data, query_name=query_name, log_path=self.log_path)
+                query_hue = link_hue.QueryHue(hue_data=self.link_data, query_name=query_name, log_path=self.log_path)
                 query_hue.explain(sql)
                 time.sleep(1)
                 button_explain.SetLabel("校验")
@@ -116,7 +120,7 @@ class main_gui():
             # 获取设置值
             start_date = text_start_date.GetValue()
             end_date = text_end_date.GetValue()
-            date_format = comboBox_date_format.GetValue()
+            date_format = combobox_date_format.GetValue()
             step_type = step_type_list[choice_step_type.GetSelection()]
             thread_num = int(text_thread_num.GetValue())
             step = int(text_step.GetValue())
@@ -126,23 +130,28 @@ class main_gui():
 
             # 执行预设
             if self.link_type == 'hue':
-                query_mqt = link_hue.query_hue(hue_data=self.link_data, query_name=query_name, log_path=self.log_path)
+                query_mqt = link_hue.QueryHue(hue_data=self.link_data, query_name=query_name, log_path=self.log_path)
             elif self.link_type == 'redash':
-                query_mqt = link_redash.query_redash(redash_data=self.link_data, query_name=query_name, log_path=self.log_path)
+                query_mqt = link_redash.QueryRedash(redash_data=self.link_data, query_name=query_name,
+                                                    log_path=self.log_path)
             else:
                 exit(1)
             query_mqt.login()
             start_time = datetime.datetime.now()
             cnt_num = 0
             # 此处的date_format与输入的时间格式一致，如果后期输入的日期格式固定，这里就需要先对start_date/end_date处理成date_format格式（果）
-            exec_date_list = common_func.exec_date(start_date=start_date, end_date=end_date, step=step, date_format=date_format, step_type=step_type)
+            exec_date_list = common_func.exec_date(start_date=start_date, end_date=end_date, step=step,
+                                                   date_format=date_format, step_type=step_type)
             exec_date_num = len(exec_date_list)
             label_value_total.SetLabel("{0}/{1}".format(str(cnt_num), str(exec_date_num)))
             logging.info(sql)
             for exec_date_value in exec_date_list:
                 # 此处的date_format与输出的时间格式一致（因）
-                exec_sql_value = common_func.sql_format(exec_sql=sql, exec_date=exec_date_value, date_format=date_format)
-                query_threading = threading.Thread(target=query_mqt.query, kwargs={'exec_sql': exec_sql_value, 'download_path': download_path, 'exec_date': exec_date_value})
+                exec_sql_value = common_func.sql_format(exec_sql=sql, exec_date=exec_date_value,
+                                                        date_format=date_format)
+                query_threading = threading.Thread(target=query_mqt.query, kwargs={'exec_sql': exec_sql_value,
+                                                                                   'download_path': download_path,
+                                                                                   'exec_date': exec_date_value})
                 cnt_num = cnt_num + 1
                 logging.info("当前执行日期:{0},提交进度{1}%".format(exec_date_value, round(1.0*cnt_num/exec_date_num*100, 2)))
                 query_threading.start()
@@ -150,7 +159,8 @@ class main_gui():
                     query_threading.join()
                 gauge_value = round(1.0*cnt_num/exec_date_num*100, 2)
                 gauge_total.SetValue(gauge_value)
-                label_value_total.SetLabel("{0}/{1}:{2}%".format(str(cnt_num).rjust(3), str(exec_date_num).ljust(3), str(gauge_value).rjust(5)))
+                label_value_total.SetLabel("{0}/{1}:{2}%".format(str(cnt_num).rjust(3), str(exec_date_num).ljust(3),
+                                                                 str(gauge_value).rjust(5)))
                 # 避免提交过快导致提交重复
                 time.sleep(1)
             query_threading.join()
@@ -172,7 +182,7 @@ class main_gui():
             log.close()
             last_log = re.search(r'((.*\n)+.+The end is the beginning!\n)?((.*\n)*?)$', read_log).group(3)
             fail_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 执行失败', last_log)]
-            if fail_list == []:
+            if fail_list is []:
                 pass
             else:
                 logging.warning("{0} 本次执行失败信息:{1}".format(query_name, ','.join(fail_list)))
@@ -180,7 +190,8 @@ class main_gui():
 
             button_exec.SetLabel("执行")
             if check_finish.GetValue() is True:
-                dialog_close = wx.MessageDialog(None, message="SQL已执行完毕！！！", caption="提醒", style=wx.OK | wx.ICON_WARNING)
+                dialog_close = wx.MessageDialog(None, message="SQL已执行完毕！！！", caption="提醒",
+                                                style=wx.OK | wx.ICON_WARNING)
                 dialog_close.ShowModal()
 
         @thread_decorator
@@ -199,9 +210,10 @@ class main_gui():
                 file_name = '{0}_{1}_{2}'.format(self.link_type.lower(), query_name, self.exec_date)
             cancel_list = []
             if self.link_type == 'hue':
-                query_mqt = link_hue.query_hue(hue_data=self.link_data, query_name=query_name, log_path=self.log_path)
+                query_mqt = link_hue.QueryHue(hue_data=self.link_data, query_name=query_name, log_path=self.log_path)
             elif self.link_type == 'redash':
-                query_mqt = link_redash.query_redash(redash_data=self.link_data, query_name=query_name, log_path=self.log_path)
+                query_mqt = link_redash.QueryRedash(redash_data=self.link_data, query_name=query_name,
+                                                    log_path=self.log_path)
             else:
                 exit(1)
             query_mqt.login()
@@ -285,7 +297,7 @@ class main_gui():
         hbox_config_1.Add(label_end_date, proportion=0, flag=wx.RIGHT | wx.TOP, border=5)
         hbox_config_1.Add(text_end_date, proportion=1, flag=wx.RIGHT, border=5)
         hbox_config_1.Add(label_date_format, proportion=0, flag=wx.RIGHT | wx.TOP, border=5)
-        hbox_config_1.Add(comboBox_date_format, proportion=1, flag=wx.RIGHT, border=5)
+        hbox_config_1.Add(combobox_date_format, proportion=1, flag=wx.RIGHT, border=5)
         hbox_config_1.Add(label_thread_num, proportion=0, flag=wx.RIGHT | wx.TOP, border=5)
         hbox_config_1.Add(text_thread_num, proportion=1)
         hbox_config_2 = wx.BoxSizer()
@@ -356,7 +368,8 @@ if __name__ == '__main__':
     button_login.SetBackgroundColour("#338BB8")
     button_login.SetForegroundColour("#FFFFFF")
     button_login.SetDefault()
-    combobox_link_type = wx.ComboBox(login_panel, value="Link Type", size=(80, 30), choices=link_type_list, style=wx.CB_DROPDOWN)
+    combobox_link_type = wx.ComboBox(login_panel, value="Link Type", size=(80, 30), choices=link_type_list,
+                                     style=wx.CB_DROPDOWN)
     check_remeber = wx.CheckBox(login_panel, label="Remeber", size=(75, 30))
 
 
@@ -403,7 +416,8 @@ if __name__ == '__main__':
             button_login_size = button_login.GetSize()
             label_login_error = wx.StaticText(login_panel, label=error_info)
             label_login_error_size = label_login_error.GetSize()
-            label_login_error.SetPosition((button_login_pos[0]+button_login_size[0]/2-label_login_error_size[0]/2, button_login_pos[1]+button_login_size[1]+5))
+            label_login_error.SetPosition((button_login_pos[0]+button_login_size[0]/2-label_login_error_size[0]/2,
+                                           button_login_pos[1]+button_login_size[1]+5))
             label_login_error.SetForegroundColour("white")
             label_login_error.SetBackgroundColour("red")
             label_login_error_mark = 1
@@ -420,7 +434,7 @@ if __name__ == '__main__':
 
         if link_type in link_type_list:
             if link_type == 'hue':
-                link_mqt = link_hue.query_hue(hue_data=link_data, is_log=0)
+                link_mqt = link_hue.QueryHue(hue_data=link_data, is_log=0)
             elif link_type == 'redash':
                 link_mqt = link_redash.query_redash(redash_data=link_data, is_log=0)
             else:
@@ -439,7 +453,7 @@ if __name__ == '__main__':
                     link_info.set(link_type, 'password', common_func.encryption(text_password.GetValue(), 1))
                     link_info.write(open('link_info.ini', 'r+', encoding="utf-8"))
                 login_frame.Destroy()
-                main = main_gui(link_data, link_type)
+                main = MainGui(link_data, link_type)
                 main.main_app()
             else:
                 login_error(" Error: Invalid Username or Password or Host")

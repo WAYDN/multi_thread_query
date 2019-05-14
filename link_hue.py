@@ -12,7 +12,8 @@ import requests
 from xml.sax.saxutils import unescape
 import common_func
 
-class query_hue():
+
+class QueryHue:
     """
     exit备注（-1:提交参数错误，1：sql错误，0：系统错误）
     """
@@ -52,18 +53,21 @@ class query_hue():
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
             "Origin": hue_data['ip'],
             "Referer": self.csrf_url,
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
         }
         self.execute_headers = {
             "Accept": "application/json, text/javascript, */*; q=0.01",
             "Origin": hue_data['ip'],
             "Referer": hue_data['ip'] + hue_data['beeswax_path'],
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
         }
         self.download_headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
             "Upgrade-Insecure-Requests": "1",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
         }
         self.execute_data = {
             "query-query": "select 'test'",
@@ -101,7 +105,6 @@ class query_hue():
         else:
             pass
 
-
     def login(self):
         """
         链接登录hue
@@ -135,13 +138,13 @@ class query_hue():
             self.execute_data['query-query'] = exec_sql
 
         # 校验sql
-        explain_req = self.session_opener.post(url=self.explain_url, data=self.execute_data, headers=self.execute_headers)
+        explain_req = self.session_opener.post(url=self.explain_url, data=self.execute_data, 
+                                               headers=self.execute_headers)
         explain_reuslt = json.loads(explain_req.text)
         if explain_reuslt['status'] == 0:
             logging.info("校验通过")
         else:
             logging.error(explain_reuslt['message'])
-
 
     def query(self, exec_sql=None, is_explain=0, download_path=None, exec_date=None):
         """
@@ -154,6 +157,7 @@ class query_hue():
         """
         # 查询开始
         start_time = datetime.datetime.now()
+        self.login()
 
         # 配置查询信息
         self.execute_headers['X-CSRFToken'] = self.csrf_token
@@ -175,15 +179,16 @@ class query_hue():
 
         # 提交sql,并获取result_id
 
-        execute_req = self.session_opener.post(url=self.execute_url, data=self.execute_data, headers=self.execute_headers)
-        execute_reuslt = json.loads(execute_req.text)
-        if execute_reuslt['status'] == 0:
-            result_id = execute_reuslt['id']
+        execute_req = self.session_opener.post(url=self.execute_url, data=self.execute_data, 
+                                               headers=self.execute_headers)
+        execute_result = json.loads(execute_req.text)
+        if execute_result['status'] == 0:
+            result_id = execute_result['id']
             logging.info('<result_id:{0}> {1} 提交成功'.format(result_id, exec_date))
             self.result_id_list[result_id] = 0
             pass
         else:
-            logging.error(execute_reuslt['message'])
+            logging.error(execute_result['message'])
             exit(1)
 
         # 获取结果信息
@@ -194,7 +199,8 @@ class query_hue():
         result_columns = []
         i = 0
         while is_success is False and is_failure is False:
-            watch_req = self.session_opener.post(url=self.watch_url.format(result_id), data=self.watch_data, headers=self.execute_headers)
+            watch_req = self.session_opener.post(url=self.watch_url.format(result_id), data=self.watch_data,
+                                                 headers=self.execute_headers)
             watch_result = json.loads(watch_req.text)
             is_success = watch_result['isSuccess']
             is_failure = watch_result['isFailure']
@@ -217,8 +223,8 @@ class query_hue():
             self.result_id_list[result_id] = 1
         # print self.result_url.format(result_id)
 
-
-        if download_path is None or download_path == '' or re.search(r"create|drop|insert", exec_sql) is not None or is_failure is True:
+        if download_path is None or download_path == '' or re.search(r"create|drop|insert", exec_sql) is not None \
+                or is_failure is True:
             pass
         else:
             # 每1000条写入一次数据
@@ -240,11 +246,13 @@ class query_hue():
                 result_file = open(file_path, 'a+', encoding='utf-8')
                 result_file.write(result_text)
                 result_file.close()
-                logging.info("<result_id:{0}> {1} 数据下载进度{2}%".format(result_id, exec_date, 100.0*min(for_i*1000+1000, max_col_num)/max_col_num))
+                logging.info("<result_id:{0}> {1} 数据下载进度{2}%".
+                             format(result_id, exec_date, 100.0*min(for_i*1000+1000, max_col_num)/max_col_num))
             logging.info("<result_id:{0}> {1} 数据下载成功".format(result_id, exec_date))
 
         # 后期数据操作备用
         self.result = result_data
+        self.result.insert(0, [i['name'] for i in result_columns])
 
         # 查询结束
         end_time = datetime.datetime.now()
@@ -252,17 +260,18 @@ class query_hue():
 
         return self.result
 
-    def query_thread(self, exec_sql, start_date, end_date, step=1, date_format='%Y%m%d', step_type='day', thread_num=2, download_path=None):
+    def query_thread(self, exec_sql, start_date, end_date, step=1, date_format='%Y%m%d', step_type='day', thread_num=2,
+                     download_path=None):
         """
         多线程执行提交sql
-        :param start_date: int,string/开始日期
-        :param end_date: int,string/结束日期
+        :param exec_sql: string/待执行的sql
+        :param start_date: string/开始日期
+        :param end_date: string/结束日期
         :param step: int/时间跨度，默认1
         :param date_format: string/输入输出的时间格式，默认'%Y%m%d'
         :param step_type: string/时间跨度周期类型，默认'day',否则为'month'
         :param thread_num: int/线程数
         :param download_path: string/结果下载路径，None表示不进行下载操作
-        :param query_name: string/本次查询名称，将作为保存文件的文件名（同名则数据结果合并保存）
         :return: 无，结果集以文件形式写入
         """
         # 线程开始
@@ -275,16 +284,19 @@ class query_hue():
 
         # 声明参数
         cnt_num = 0
-        # 此处的date_format与输入的时间格式一致，如果后期输入的日期格式固定，这里就需要先对start_date/end_date处理成date_format格式（果）
-        exec_date_list = common_func.exec_date(start_date=start_date, end_date=end_date, step=step, date_format=date_format, step_type=step_type)
+        # 此处的date_format与输入的时间格式一致
+        exec_date_list = common_func.exec_date(start_date=start_date, end_date=end_date, step=step,
+                                               date_format=date_format, step_type=step_type)
         exec_date_num = len(exec_date_list)
 
         self.login()
         logging.info(exec_sql)
         for exec_date_value in exec_date_list:
             # 此处的date_format与输出的时间格式一致（因）
-            exec_sql_value = common_func.sql_format(exec_sql=exec_sql, exec_date=exec_date_value, date_format=date_format)
-            query_threading = threading.Thread(target=self.query, args=(exec_sql_value, 0, download_path, exec_date_value))
+            exec_sql_value = common_func.sql_format(exec_sql=exec_sql, exec_date=exec_date_value,
+                                                    date_format=date_format)
+            query_threading = threading.Thread(target=self.query, args=(exec_sql_value, 0, download_path,
+                                                                        exec_date_value))
             cnt_num = cnt_num + 1
             logging.info("当前执行日期:{0},提交进度{1}%".format(exec_date_value, round(1.0*cnt_num/exec_date_num*100,2)))
             query_threading.start()
@@ -315,12 +327,15 @@ class query_hue():
     def get_running(self):
         self.session_opener.get(url=self.get_running_url, headers=self.execute_headers)
 
-# import configparser
-# link_info = configparser.ConfigParser()
-# link_info.read(os.getcwd()+'/gui/link_info.ini')
-# hue_data = dict(link_info.items('hue'))
-# hue_data['ip'] = ''
-# hue_data['username'] = ''
-# hue_data['password'] = ''
-# hue = query_hue(hue_data, '123')
-# hue.query_thread('select 123', '2018-12-12', '2018-12-12', 1, '%Y-%m-%d', 'day', 2, 'C:\\Users\\ernes\\Desktop')
+
+if __name__ == '__main__':
+    import configparser
+    link_info = configparser.ConfigParser()
+    link_info.read(os.getcwd()+'/gui/link_info.ini')
+    hue_info = dict(link_info.items('hue'))
+    hue_info['ip'] = 'http://188.185.1.41:8888'
+    hue_info['username'] = 'wangq'
+    hue_info['password'] = '123456'
+    hue = QueryHue(hue_info, '123')
+    print(hue.query('select 123 as a'))
+    # hue.query_thread('select 123', '2018-12-12', '2018-12-12', 1, '%Y-%m-%d', 'day', 2, 'C:\\Users\\ernes\\Desktop')
