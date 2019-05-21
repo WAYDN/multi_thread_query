@@ -25,9 +25,12 @@ Multi-threaded query tool to reduce the mechanical operation of repeatedly submi
 ![图标](https://github.com/WAYDN/multi_thread_query/blob/master/gui/image/mqt.ico)
 
 ### 操作界面
-- 登录界面
+登录界面
+
 ![登录界面](https://github.com/WAYDN/multi_thread_query/blob/master/gui/image/login.png)
-- 执行界面
+
+执行界面
+
 ![执行界面](https://github.com/WAYDN/multi_thread_query/blob/master/gui/image/execution.png)
 
 #### 开发环境
