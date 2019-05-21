@@ -22,7 +22,11 @@ Multi-threaded query tool to reduce the mechanical operation of repeatedly submi
 - 若非正常关闭，进程会有残留，请到任务管理器中结束进程
 
 #### 图标
-![mqt](https://github.com/WAYDN/multi_thread_query/blob/master/gui/mqt.ico)
+![图标](https://github.com/WAYDN/multi_thread_query/blob/master/gui/image/mqt.ico)
+
+### 操作界面
+![登录界面](https://github.com/WAYDN/multi_thread_query/blob/master/gui/image/login.ico)
+![执行界面](https://github.com/WAYDN/multi_thread_query/blob/master/gui/image/execution.ico)
 
 #### 开发环境
 python3.6

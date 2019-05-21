@@ -34,7 +34,7 @@ class MainGui():
         mgt = wx.App()
         main_frame = wx.Frame(None, title='{0}客户端'.format(self.link_type), size=(800, 600),
                               style=wx.DEFAULT_FRAME_STYLE)
-        main_frame.SetIcon(wx.Icon('mqt.ico'))
+        main_frame.SetIcon(wx.Icon('image\\mqt.ico'))
         main_frame.Center()
         main_panel = wx.Panel(main_frame)
 
@@ -77,7 +77,7 @@ class MainGui():
         button_exec = wx.Button(main_panel, label="执行")
         button_cancel = wx.Button(main_panel, label="自杀")
         # help控件
-        image_help = wx.Image("help.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        image_help = wx.Image("image\\help.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap()
         m = image_help.GetWidth()/label_sql.GetCharWidth()/2
         image_help = image_help.ConvertToImage().Scale(image_help.GetWidth()/m, image_help.GetHeight()/m)
         image_help = image_help.ConvertToBitmap()
@@ -350,7 +350,7 @@ if __name__ == '__main__':
 
     login_app = wx.App()
     login_frame = wx.Frame(None, title='MQT Login', size=(320, 250), style=wx.CAPTION | wx.CLOSE_BOX)
-    login_frame.SetIcon(wx.Icon('mqt.ico'))
+    login_frame.SetIcon(wx.Icon('image\\mqt.ico'))
     login_frame.SetBackgroundColour("#FFFFFF")
     login_frame.Center()
     login_panel = wx.Panel(login_frame)
