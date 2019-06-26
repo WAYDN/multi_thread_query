@@ -71,7 +71,7 @@ class QueryHue:
         }
         self.execute_data = {
             "query-query": "select 'test'",
-            "query-database": "default",
+            "query-database": "db_test",
             "settings-next_form_id": 0,
             "file_resources-next_form_id": 0,
             "functions-next_form_id": 0,
@@ -80,7 +80,7 @@ class QueryHue:
         }
         self.watch_data = {
             "query-query": "select 'test'",
-            "query-database": "default",
+            "query-database": "db_test",
             "log-start-over": "true",
             "settings-next_form_id": 0,
             "file_resources-next_form_id": 0,
@@ -222,9 +222,9 @@ class QueryHue:
             logging.info("<result_id:{0}> {1} 数据加载成功".format(result_id, exec_date))
             self.result_id_list[result_id] = 1
         # print self.result_url.format(result_id)
+        # print(result_data)
 
-        if download_path is None or download_path == '' or re.search(r"create|drop|insert", exec_sql) is not None \
-                or is_failure is True:
+        if download_path is None or download_path == '' or result_data == [] or is_failure is True:
             pass
         else:
             # 每1000条写入一次数据
@@ -246,9 +246,9 @@ class QueryHue:
                 result_file = open(file_path, 'a+', encoding='utf-8')
                 result_file.write(result_text)
                 result_file.close()
-                logging.info("<result_id:{0}> {1} 数据下载进度{2}%".
-                             format(result_id, exec_date, 100.0*min(for_i*1000+1000, max_col_num)/max_col_num))
-            logging.info("<result_id:{0}> {1} 数据下载成功".format(result_id, exec_date))
+                # logging.info("<result_id:{0}> {1} 数据写入进度{2}%".
+                #              format(result_id, exec_date, 100.0*min(for_i*1000+1000, max_col_num)/max_col_num))
+            logging.info("<result_id:{0}> {1} 数据写入成功".format(result_id, exec_date))
 
         # 后期数据操作备用
         self.result = result_data

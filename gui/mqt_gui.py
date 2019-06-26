@@ -182,7 +182,7 @@ class MainGui():
             log.close()
             last_log = re.search(r'((.*\n)+.+The end is the beginning!\n)?((.*\n)*?)$', read_log).group(3)
             fail_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 执行失败', last_log)]
-            if fail_list is []:
+            if len(fail_list) == 0:
                 pass
             else:
                 logging.warning("{0} 本次执行失败信息:{1}".format(query_name, ','.join(fail_list)))
