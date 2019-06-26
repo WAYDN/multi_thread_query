@@ -71,7 +71,7 @@ class QueryHue:
         }
         self.execute_data = {
             "query-query": "select 'test'",
-            "query-database": "db_test",
+            "query-database": hue_data['query-database'],
             "settings-next_form_id": 0,
             "file_resources-next_form_id": 0,
             "functions-next_form_id": 0,
@@ -80,7 +80,7 @@ class QueryHue:
         }
         self.watch_data = {
             "query-query": "select 'test'",
-            "query-database": "db_test",
+            "query-database": hue_data['query-database'],
             "log-start-over": "true",
             "settings-next_form_id": 0,
             "file_resources-next_form_id": 0,
@@ -333,9 +333,6 @@ if __name__ == '__main__':
     link_info = configparser.ConfigParser()
     link_info.read(os.getcwd()+'/gui/link_info.ini')
     hue_info = dict(link_info.items('hue'))
-    hue_info['ip'] = 'http://188.185.1.41:8888'
-    hue_info['username'] = 'wangq'
-    hue_info['password'] = '123456'
     hue = QueryHue(hue_info, '123')
     print(hue.query('select 123 as a'))
     # hue.query_thread('select 123', '2018-12-12', '2018-12-12', 1, '%Y-%m-%d', 'day', 2, 'C:\\Users\\ernes\\Desktop')

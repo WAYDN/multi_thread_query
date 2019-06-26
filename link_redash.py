@@ -37,7 +37,7 @@ class QueryRedash:
             'password': redash_data['password']
         }
         self.query_results_data = {
-            'data_source_id': 56,
+            'data_source_id': int(redash_data['data_source_id']),
             'max_age': 0,
             'query': "select 1"
         }
