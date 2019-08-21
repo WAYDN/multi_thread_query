@@ -229,6 +229,8 @@ class QueryHue:
         else:
             # 每1000条写入一次数据
             max_col_num = len(result_data)
+            if max_col_num > 5000:
+                logging.info("<result_id:{0}> {1} {2}条数据下载中".format(result_id, exec_date, max_col_num))
             for_num = int(math.ceil(max_col_num/1000.0))
             for for_i in range(for_num):
                 result_text = ''
@@ -248,7 +250,7 @@ class QueryHue:
                 result_file.close()
                 # logging.info("<result_id:{0}> {1} 数据写入进度{2}%".
                 #              format(result_id, exec_date, 100.0*min(for_i*1000+1000, max_col_num)/max_col_num))
-            logging.info("<result_id:{0}> {1} 数据写入成功".format(result_id, exec_date))
+            logging.info("<result_id:{0}> {1} 数据写入成功【】".format(result_id, exec_date, max_col_num))
 
         # 后期数据操作备用
         self.result = result_data
@@ -310,7 +312,7 @@ class QueryHue:
         # 线程结束
         end_time = datetime.datetime.now()
         logging.info(u"{0} 累计耗时 {1}".format(self.file_name, str(end_time-start_time)))
-        logging.info("The end is the beginning!")
+        logging.info("The end is the beginning!\n")
 
     def cancel(self, result_id):
         # 配置查询信息
@@ -325,7 +327,13 @@ class QueryHue:
             return 0
 
     def get_running(self):
-        self.session_opener.get(url=self.get_running_url, headers=self.execute_headers)
+        # 获取当前用户正在执行的查询
+        running_data = self.session_opener.get(url=self.get_running_url, headers=self.execute_headers)
+        if running_data.status_code == 200:
+            result = running_data.text
+        else:
+            result = running_data.status_code
+        return(result)
 
 
 if __name__ == '__main__':
@@ -333,6 +341,20 @@ if __name__ == '__main__':
     link_info = configparser.ConfigParser()
     link_info.read(os.getcwd()+'/gui/link_info.ini')
     hue_info = dict(link_info.items('hue'))
+    hue_info['ip'] = 'http://188.166.1.87:8888'
+    hue_info['username'] = 'wangq'
+    hue_info['password'] = '123456'
     hue = QueryHue(hue_info, '123')
-    print(hue.query('select 123 as a'))
-    # hue.query_thread('select 123', '2018-12-12', '2018-12-12', 1, '%Y-%m-%d', 'day', 2, 'C:\\Users\\ernes\\Desktop')
+    # print(hue.get_running())
+    # print(hue.query('select 123 as a'))
+    hue.query_thread("""
+    select  user_id,
+		case when type = '0类:线下用户' then 'D'
+			 when type in ('1类:现金购买用户', '2类:积分购买用户', '3类:支付未完成用户') then 'A'
+			 when type in ('4类:访问过产品落地页用户', '5类:访问过活动页用户', '6类:做过风险测评') then 'B'
+			 when type in ('7类:活跃用户', '8类:不活跃用户') then 'C' end as type 
+  from  db_test.wq_user_deliver 
+ where  cast(regexp_extract(type, '^(\\d+)') as int) < 9
+   and  cast(regexp_extract(type, '^(\\d+)') as int) >= 0
+   limit 100
+    """, '2018-12-12', '2018-12-12', 1, '%Y-%m-%d', 'day', 2, 'C:\\Users\\admin\\Desktop')

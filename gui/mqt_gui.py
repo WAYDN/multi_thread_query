@@ -23,7 +23,7 @@ def thread_decorator(action_def):
     return action
 
 
-class MainGui():
+class MainGui:
     def __init__(self, link_data, link_type):
         self.link_data = link_data
         self.link_type = link_type

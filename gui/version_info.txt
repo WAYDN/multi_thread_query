@@ -34,9 +34,9 @@ VSVersionInfo(
         StringStruct(u'CompanyName', u'ernestwq@163.com'),
         StringStruct(u'LegalCopyright', u'Copyright by ernestwq@163.com, All Rights Reserved'),
         StringStruct(u'FileDescription', u'多线程提交sql,如有使用问题请联系ernestwq@163.com'),
-        StringStruct(u'FileVersion', u'1.0.1'),
+        StringStruct(u'FileVersion', u'1.0.2'),
         StringStruct(u'OriginalFilename', u'MQT.exe'),
-        StringStruct(u'ProductVersion', u'1.0.1')])
+        StringStruct(u'ProductVersion', u'1.0.2')])
       ]), 
     VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
   ]
