@@ -250,7 +250,7 @@ class QueryHue:
                 result_file.close()
                 # logging.info("<result_id:{0}> {1} 数据写入进度{2}%".
                 #              format(result_id, exec_date, 100.0*min(for_i*1000+1000, max_col_num)/max_col_num))
-            logging.info("<result_id:{0}> {1} 数据写入成功【{2}】".format(result_id, exec_date, max_col_num))
+            logging.info("<result_id:{0}> {1} 数据写入成功【{2}】".format(result_id, exec_date, str(max_col_num)))
 
         # 后期数据操作备用
         self.result = result_data
