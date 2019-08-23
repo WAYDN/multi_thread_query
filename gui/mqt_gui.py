@@ -14,6 +14,7 @@ import configparser
 import common_func
 import link_hue
 import link_redash
+import sys
 
 
 def thread_decorator(action_def):
@@ -32,6 +33,7 @@ class MainGui:
 
     def main_app(self):
         mgt = wx.App()
+        mgt.SetExitOnFrameDelete(True)
         main_frame = wx.Frame(None, title='{0}客户端'.format(self.link_type), size=(800, 600),
                               style=wx.DEFAULT_FRAME_STYLE)
         main_frame.SetIcon(wx.Icon('image\\mqt.ico'))
@@ -185,7 +187,7 @@ class MainGui:
             if len(fail_list) == 0:
                 pass
             else:
-                logging.warning("{0} 本次执行失败信息:{1}".format(query_name, ','.join(fail_list)))
+                logging.warning("{0} 本次执行失败信息:{1}".format(query_nDestroyame, ','.join(fail_list)))
             logging.info("The end is the beginning!")
 
             button_exec.SetLabel("执行")
@@ -257,9 +259,9 @@ class MainGui:
                                             style=wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING)
             ret = dialog_close.ShowModal()
             if ret == wx.ID_YES:
-                main_frame.Destroy()
                 # 确保程序完整退出，无残留
-                exit(0)
+                sys.exit()
+                # main_frame.Destroy()
             else:
                 pass
 
@@ -349,6 +351,7 @@ if __name__ == '__main__':
         link_info.read('link_info.ini')
 
     login_app = wx.App()
+    login_app.SetExitOnFrameDelete(True)
     login_frame = wx.Frame(None, title='MQT Login', size=(320, 250), style=wx.CAPTION | wx.CLOSE_BOX)
     login_frame.SetIcon(wx.Icon('image\\mqt.ico'))
     login_frame.SetBackgroundColour("#FFFFFF")

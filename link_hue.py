@@ -213,6 +213,7 @@ class QueryHue:
             else:
                 logging.info("<result_id:{0}> {1} 执行失败".format(result_id, exec_date))
             while tmp_data != [] or i == 0:
+                logging.info("<result_id:{0}> {1} 数据加载中...".format(result_id, exec_date))
                 result_req = self.session_opener.get(url=self.result_url.format(result_id, i*100))
                 result = json.loads(result_req.text)
                 tmp_data = result['results']
@@ -230,7 +231,7 @@ class QueryHue:
             # 每1000条写入一次数据
             max_col_num = len(result_data)
             if max_col_num > 5000:
-                logging.info("<result_id:{0}> {1} {2}条数据下载中".format(result_id, exec_date, max_col_num))
+                logging.info("<result_id:{0}> {1} {2}条数据下载中...".format(result_id, exec_date, max_col_num))
             for_num = int(math.ceil(max_col_num/1000.0))
             for for_i in range(for_num):
                 result_text = ''
