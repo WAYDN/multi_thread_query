@@ -187,7 +187,7 @@ class MainGui:
             if len(fail_list) == 0:
                 pass
             else:
-                logging.warning("{0} 本次执行失败信息:{1}".format(query_nDestroyame, ','.join(fail_list)))
+                logging.warning("{0} 本次执行失败信息:{1}".format(query_name, ','.join(fail_list)))
             logging.info("The end is the beginning!")
 
             button_exec.SetLabel("执行")
@@ -439,7 +439,7 @@ if __name__ == '__main__':
             if link_type == 'hue':
                 link_mqt = link_hue.QueryHue(hue_data=link_data, is_log=0)
             elif link_type == 'redash':
-                link_mqt = link_redash.query_redash(redash_data=link_data, is_log=0)
+                link_mqt = link_redash.QueryRedash(redash_data=link_data, is_log=0)
             else:
                 exit(1)
 
