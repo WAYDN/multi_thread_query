@@ -146,13 +146,14 @@ class QueryHue:
         else:
             logging.error(explain_reuslt['message'])
 
-    def query(self, exec_sql=None, is_explain=0, download_path=None, exec_date=None):
+    def query(self, exec_sql=None, is_explain=0, download_path=None, exec_date=None, download_file_name=None):
         """
         向hue提交sql，并以list格式返回数据结果
         :param exec_sql: string/所要查询的sql
         :param is_explain: int/是否在查询前校验sql,默认为0 不进行校验
         :param download_path: string/结果下载路径，None表示不进行下载操作
         :param exec_date: string/仅在多线程中有实际意义
+        :param download_file_name: string/结果下载保存用的文件名
         :return: list/返回数据结果
         """
         # 查询开始
@@ -241,7 +242,10 @@ class QueryHue:
                     result_text = result_text + '\n' + '\t'.join([str(i) for i in result_value])
                 if not os.path.exists(download_path):
                     os.mkdir(download_path)
-                file_path = '{0}/{1}.txt'.format(download_path, self.file_name)
+                if download_file_name is None:
+                    file_path = '{0}/{1}.txt'.format(download_path, self.file_name)
+                else:
+                    file_path = '{0}/{1}.txt'.format(download_path, download_file_name)
                 if not os.path.exists(file_path):
                     # print [i['name'] for i in result['columns']]
                     result_text = '\t'.join([i['name'] for i in result_columns]) + result_text

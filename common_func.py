@@ -6,6 +6,7 @@ import logging
 import os
 import winreg
 
+
 def exec_date(start_date, end_date, step=1, date_format='%Y%m%d', step_type='day'):
     """
     执行日期列表
