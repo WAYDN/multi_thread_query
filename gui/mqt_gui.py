@@ -130,6 +130,14 @@ class MainGui:
             query_name = text_query_name.GetValue()
             sql = text_sql.GetValue()
 
+            # 日期标准格式校验
+            if re.search(r'^(\d{16}|(\d{4}(-\d{2}){2}){2})$', start_date+end_date) is None:
+                message = """开始日期/结束日期不是标准日期格式，请重新输入:\r【标准格式{0}】""".format('或'.join(date_format_list))
+                dialog_waring = wx.MessageDialog(None, message=message, caption="错误", style=wx.ICON_ERROR)
+                dialog_waring.ShowModal()
+                button_exec.SetLabel("执行")
+                exit(1)
+
             # 执行预设
             if self.link_type == 'hue':
                 query_mqt = link_hue.QueryHue(hue_data=self.link_data, query_name=query_name, log_path=self.log_path)
@@ -141,9 +149,30 @@ class MainGui:
             query_mqt.login()
             start_time = datetime.datetime.now()
             cnt_num = 0
-            # 此处的date_format与输入的时间格式一致，如果后期输入的日期格式固定，这里就需要先对start_date/end_date处理成date_format格式（果）
+            # 日期格式再次校验
             exec_date_list = common_func.exec_date(start_date=start_date, end_date=end_date, step=step,
                                                    date_format=date_format, step_type=step_type)
+            if type(exec_date_list) is not list:
+                message = """{0}\r开始日期/结束日期与日期格式冲突，是否同意强制转化
+                """.format(exec_date_list)
+                dialog_waring = wx.MessageDialog(None, message=message, caption="错误",
+                                                 style=wx.YES_NO | wx.NO_DEFAULT | wx.ICON_ERROR)
+                ret = dialog_waring.ShowModal()
+                if ret == wx.ID_YES:
+                    for i in date_format_list:
+                        if i != date_format:
+                            start_date = datetime.datetime.strftime(
+                                datetime.datetime.strptime(str(start_date), i), date_format)
+                            text_start_date.SetValue(start_date)
+                            end_date = datetime.datetime.strftime(
+                                datetime.datetime.strptime(str(end_date), i), date_format)
+                            text_end_date.SetValue(end_date)
+                            exec_date_list = common_func.exec_date(start_date=start_date, end_date=end_date, step=step,
+                                                                   date_format=date_format, step_type=step_type)
+                    button_exec.SetLabel("执行")
+                else:
+                    button_exec.SetLabel("执行")
+                    exit(1)
             exec_date_num = len(exec_date_list)
             label_value_total.SetLabel("{0}/{1}".format(str(cnt_num), str(exec_date_num)))
             logging.info(sql)

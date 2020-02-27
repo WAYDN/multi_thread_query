@@ -6,6 +6,7 @@ import logging
 import os
 import winreg
 
+
 def exec_date(start_date, end_date, step=1, date_format='%Y%m%d', step_type='day'):
     """
     执行日期列表
@@ -18,8 +19,11 @@ def exec_date(start_date, end_date, step=1, date_format='%Y%m%d', step_type='day
     """
     exec_date_list = []
     tmp_date_list = []
-    start_date = datetime.datetime.strptime(str(start_date), date_format)
-    end_date = datetime.datetime.strptime(str(end_date), date_format)
+    try:
+        start_date = datetime.datetime.strptime(str(start_date), date_format)
+        end_date = datetime.datetime.strptime(str(end_date), date_format)
+    except Exception as error_info:
+        return error_info
     diff_days = (end_date - start_date).days
     if step_type == 'day':
         strf_format = date_format
@@ -37,10 +41,11 @@ def exec_date(start_date, end_date, step=1, date_format='%Y%m%d', step_type='day
     tmp_days = len(tmp_date_list)
     for j in range(0, tmp_days, abs(step)):
         exec_date_list.append(tmp_date_list[j])
-
     return exec_date_list
+
+
 # 示例
-# print(exec_date(start_date='2018-0501', end_date='2018-0705', date_format='%Y-%m%d', step_type='month'))
+# print(exec_date(start_date='2018-0501', end_date='2018-0705', date_format='%Y%m%d', step_type='month'))
 
 
 def sql_format(exec_sql, exec_date, date_format='%Y%m%d'):
