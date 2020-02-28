@@ -207,22 +207,21 @@ class QueryHue:
             is_failure = watch_result['isFailure']
             # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
             time.sleep(5)
+        # logging.info("查询结果：{0}".format(result['is_finished']))
+        if is_success is True:
+            logging.info("<result_id:{0}> {1} 执行成功".format(result_id, exec_date))
         else:
-            # logging.info("查询结果：{0}".format(result['is_finished']))
-            if is_success is True:
-                logging.info("<result_id:{0}> {1} 执行成功".format(result_id, exec_date))
-            else:
-                logging.info("<result_id:{0}> {1} 执行失败".format(result_id, exec_date))
-            while tmp_data != [] or i == 0:
-                logging.info("<result_id:{0}> {1} 数据加载中...".format(result_id, exec_date))
-                result_req = self.session_opener.get(url=self.result_url.format(result_id, i*100))
-                result = json.loads(result_req.text)
-                tmp_data = result['results']
-                result_data += tmp_data
-                result_columns = result['columns']
-                i += 1
-            logging.info("<result_id:{0}> {1} 数据加载成功".format(result_id, exec_date))
-            self.result_id_list[result_id] = 1
+            logging.info("<result_id:{0}> {1} 执行失败".format(result_id, exec_date))
+        while tmp_data != [] or i == 0:
+            logging.info("<result_id:{0}> {1} 数据加载中...".format(result_id, exec_date))
+            result_req = self.session_opener.get(url=self.result_url.format(result_id, i*100))
+            result = json.loads(result_req.text)
+            tmp_data = result['results']
+            result_data += tmp_data
+            result_columns = result['columns']
+            i += 1
+        logging.info("<result_id:{0}> {1} 数据加载成功".format(result_id, exec_date))
+        self.result_id_list[result_id] = 1
         # print self.result_url.format(result_id)
         # print(result_data)
 

@@ -282,7 +282,9 @@ class MainGui:
                 "一曲离歌两行泪，不知何地再逢君 \n                                           —— 韦庄",
                 "人生不相见，动如参与商 \n                                           —— 杜甫",
                 "仰天大笑出门去，我辈岂是蓬蒿人 \n                                           —— 李白",
-                "弃我去者，昨日之日不可留 \n                                           —— 李白"
+                "弃我去者，昨日之日不可留 \n                                           —— 李白",
+                "寒雨连江夜入吴，平明送客楚山孤 \n                                         —— 王昌龄",
+                "轮台东门送君去，雪上空留马行处 \n                                          —— 岑参"
             ]
             dialog_close = wx.MessageDialog(None, message=message_list[int(random.random()*5)], caption="关闭",
                                             style=wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING)
