@@ -132,7 +132,7 @@ class MainGui:
 
             # 日期标准格式校验
             if re.search(r'^(\d{16}|(\d{4}(-\d{2}){2}){2})$', start_date+end_date) is None:
-                message = """开始日期/结束日期不是标准日期格式，请重新输入:\r【标准格式{0}】""".format('或'.join(date_format_list))
+                message = """开始日期/结束日期不是标准日期格式，请重新输入:\r【标准格式:{0}】""".format('或'.join(date_format_list))
                 dialog_waring = wx.MessageDialog(None, message=message, caption="错误", style=wx.ICON_ERROR)
                 dialog_waring.ShowModal()
                 button_exec.SetLabel("执行")
@@ -284,7 +284,11 @@ class MainGui:
                 "仰天大笑出门去，我辈岂是蓬蒿人 \n                                           —— 李白",
                 "弃我去者，昨日之日不可留 \n                                           —— 李白",
                 "寒雨连江夜入吴，平明送客楚山孤 \n                                         —— 王昌龄",
-                "轮台东门送君去，雪上空留马行处 \n                                          —— 岑参"
+                "轮台东门送君去，雪上空留马行处 \n                                          —— 岑参",
+                "一看肠一断，好去莫回头 \n                                          —— 白居易",
+                "最是人间留不住，朱颜辞镜花辞树 \n                                          —— 王国维",
+                "直须看尽洛城花，始共春风容易别 \n                                          —— 欧阳修",
+                "挥手自兹去，萧萧班马鸣 \n                                           —— 李白"
             ]
             dialog_close = wx.MessageDialog(None, message=message_list[int(random.random()*5)], caption="关闭",
                                             style=wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING)
