@@ -10,6 +10,7 @@ import time
 import datetime
 import wx
 import wx.stc as ws
+import wx.adv as wa
 import configparser
 import common_func
 import link_hue
@@ -42,14 +43,13 @@ class MainGui:
 
         # 控件定义
         # 预设参数
-        yesterday = str((datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%Y%m%d'))
-        date_format_list = ['%Y%m%d', '%Y-%m-%d']
+        date_format_list = ['%Y-%m-%d', '%Y%m%d']
         step_type_list = ['day', 'month']
         # 参数控件
         label_start_date = wx.StaticText(main_panel, label="开始日期")
-        text_start_date = wx.TextCtrl(main_panel, value=yesterday)
+        picker_start_date = wa.DatePickerCtrl(main_panel, id=-1, style=wa.DP_DROPDOWN | wa.DP_SHOWCENTURY)
         label_end_date = wx.StaticText(main_panel, label="结束日期")
-        text_end_date = wx.TextCtrl(main_panel, value=yesterday)
+        picker_end_date = wa.DatePickerCtrl(main_panel, id=-1, style=wa.DP_DROPDOWN | wa.DP_SHOWCENTURY)
         label_date_format = wx.StaticText(main_panel, label="时间格式")
         combobox_date_format = wx.ComboBox(main_panel, choices=date_format_list)
         combobox_date_format.SetSelection(0)
@@ -120,9 +120,11 @@ class MainGui:
             text_log.Clear()
 
             # 获取设置值
-            start_date = text_start_date.GetValue()
-            end_date = text_end_date.GetValue()
             date_format = combobox_date_format.GetValue()
+            start_date = picker_start_date.GetValue().Format(date_format)
+            end_date = picker_end_date.GetValue().Format(date_format)
+            print(start_date, end_date)
+            exit()
             step_type = step_type_list[choice_step_type.GetSelection()]
             thread_num = int(text_thread_num.GetValue())
             step = int(text_step.GetValue())
@@ -130,15 +132,8 @@ class MainGui:
             query_name = text_query_name.GetValue()
             sql = text_sql.GetValue()
 
-            # 日期标准格式校验
-            if re.search(r'^(\d{16}|(\d{4}(-\d{2}){2}){2})$', start_date+end_date) is None:
-                message = """开始日期/结束日期不是标准日期格式，请重新输入:\r【标准格式:{0}】""".format('或'.join(date_format_list))
-                dialog_waring = wx.MessageDialog(None, message=message, caption="错误", style=wx.ICON_ERROR)
-                dialog_waring.ShowModal()
-                button_exec.SetLabel("执行")
-                exit(1)
-
             # 执行预设
+            query_mqt = None
             if self.link_type == 'hue':
                 query_mqt = link_hue.QueryHue(hue_data=self.link_data, query_name=query_name, log_path=self.log_path)
             elif self.link_type == 'redash':
@@ -146,33 +141,11 @@ class MainGui:
                                                     log_path=self.log_path)
             else:
                 exit(1)
-            query_mqt.login()
+            # query_mqt.login()
             start_time = datetime.datetime.now()
             cnt_num = 0
-            # 日期格式再次校验
             exec_date_list = common_func.exec_date(start_date=start_date, end_date=end_date, step=step,
                                                    date_format=date_format, step_type=step_type)
-            if type(exec_date_list) is not list:
-                message = """{0}\r开始日期/结束日期与日期格式冲突，是否同意强制转化
-                """.format(exec_date_list)
-                dialog_waring = wx.MessageDialog(None, message=message, caption="错误",
-                                                 style=wx.YES_NO | wx.NO_DEFAULT | wx.ICON_ERROR)
-                ret = dialog_waring.ShowModal()
-                if ret == wx.ID_YES:
-                    for i in date_format_list:
-                        if i != date_format:
-                            start_date = datetime.datetime.strftime(
-                                datetime.datetime.strptime(str(start_date), i), date_format)
-                            text_start_date.SetValue(start_date)
-                            end_date = datetime.datetime.strftime(
-                                datetime.datetime.strptime(str(end_date), i), date_format)
-                            text_end_date.SetValue(end_date)
-                            exec_date_list = common_func.exec_date(start_date=start_date, end_date=end_date, step=step,
-                                                                   date_format=date_format, step_type=step_type)
-                    button_exec.SetLabel("执行")
-                else:
-                    button_exec.SetLabel("执行")
-                    exit(1)
             exec_date_num = len(exec_date_list)
             label_value_total.SetLabel("{0}/{1}".format(str(cnt_num), str(exec_date_num)))
             logging.info(sql)
@@ -330,9 +303,9 @@ class MainGui:
         # 页面布置
         hbox_config_1 = wx.BoxSizer()
         hbox_config_1.Add(label_start_date, proportion=0, flag=wx.RIGHT | wx.TOP, border=5)
-        hbox_config_1.Add(text_start_date, proportion=1, flag=wx.RIGHT, border=5)
+        hbox_config_1.Add(picker_start_date, proportion=1, flag=wx.RIGHT, border=5)
         hbox_config_1.Add(label_end_date, proportion=0, flag=wx.RIGHT | wx.TOP, border=5)
-        hbox_config_1.Add(text_end_date, proportion=1, flag=wx.RIGHT, border=5)
+        hbox_config_1.Add(picker_end_date, proportion=1, flag=wx.RIGHT, border=5)
         hbox_config_1.Add(label_date_format, proportion=0, flag=wx.RIGHT | wx.TOP, border=5)
         hbox_config_1.Add(combobox_date_format, proportion=1, flag=wx.RIGHT, border=5)
         hbox_config_1.Add(label_thread_num, proportion=0, flag=wx.RIGHT | wx.TOP, border=5)
