@@ -164,7 +164,7 @@ class MainGui:
                 label_value_total.SetLabel("{0}/{1}:{2}%".format(str(cnt_num).rjust(3), str(exec_date_num).ljust(3),
                                                                  str(gauge_value).rjust(5)))
                 # 避免提交过快导致提交重复
-                time.sleep(1)
+                time.sleep(1.5)
             query_threading.join()
 
             query_name = text_query_name.GetValue()
