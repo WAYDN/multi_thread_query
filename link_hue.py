@@ -199,14 +199,19 @@ class QueryHue:
         result_data = []
         result_columns = []
         i = 0
-        while is_success is True or is_failure is True:
-            watch_req = self.session_opener.post(url=self.watch_url.format(result_id), data=self.watch_data,
-                                                 headers=self.execute_headers)
-            watch_result = json.loads(watch_req.text)
-            is_success = watch_result['isSuccess']
-            is_failure = watch_result['isFailure']
-            # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
-            time.sleep(5)
+        while is_success is not True or is_failure is not False:
+            watch_req = self.session_opener.get(url=self.watch_url.format(result_id), headers=self.execute_headers)
+            if watch_req.status_code == 200:
+                try:
+                    watch_result = json.loads(watch_req.text)
+                    is_success = watch_result['isSuccess']
+                    is_failure = watch_result['isFailure']
+                    # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
+                    time.sleep(5)
+                except Exception as e:
+                    logging.info(e)
+                    logging.info(self.watch_url.format(result_id))
+                    logging.info(watch_req.status_code)
         # logging.info("查询结果：{0}".format(result['is_finished']))
         if is_success is True:
             logging.info("<result_id:{0}> {1} 执行成功".format(result_id, exec_date))
@@ -345,20 +350,12 @@ if __name__ == '__main__':
     link_info = configparser.ConfigParser()
     link_info.read(os.getcwd()+'/gui/link_info.ini')
     hue_info = dict(link_info.items('hue'))
-    hue_info['ip'] = 'http://188.166.1.87:8888'
+    hue_info['ip'] = 'http://188.166.1.87:8889'
     hue_info['username'] = 'wangq'
     hue_info['password'] = '123456'
     hue = QueryHue(hue_info, '123')
     # print(hue.get_running())
     # print(hue.query('select 123 as a'))
     hue.query_thread("""
-    select  user_id,
-		case when type = '0类:线下用户' then 'D'
-			 when type in ('1类:现金购买用户', '2类:积分购买用户', '3类:支付未完成用户') then 'A'
-			 when type in ('4类:访问过产品落地页用户', '5类:访问过活动页用户', '6类:做过风险测评') then 'B'
-			 when type in ('7类:活跃用户', '8类:不活跃用户') then 'C' end as type 
-  from  db_test.wq_user_deliver 
- where  cast(regexp_extract(type, '^(\\d+)') as int) < 9
-   and  cast(regexp_extract(type, '^(\\d+)') as int) >= 0
-   limit 100
-    """, '2018-12-12', '2018-12-12', 1, '%Y-%m-%d', 'day', 2, 'C:\\Users\\admin\\Desktop')
+    select '#0#'
+    """, '2018-12-12', '2018-12-15', 1, '%Y-%m-%d', 'day', 2, 'C:\\Users\\admin\\Desktop')
