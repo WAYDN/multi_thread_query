@@ -123,8 +123,6 @@ class MainGui:
             date_format = combobox_date_format.GetValue()
             start_date = picker_start_date.GetValue().Format(date_format)
             end_date = picker_end_date.GetValue().Format(date_format)
-            print(start_date, end_date)
-            exit()
             step_type = step_type_list[choice_step_type.GetSelection()]
             thread_num = int(text_thread_num.GetValue())
             step = int(text_step.GetValue())
@@ -444,20 +442,21 @@ if __name__ == '__main__':
         link_data['ip'] = text_host.GetValue()
 
         if link_type in link_type_list:
-            if link_type == 'hue':
-                link_mqt = link_hue.QueryHue(hue_data=link_data, is_log=0)
-            elif link_type == 'redash':
-                link_mqt = link_redash.QueryRedash(redash_data=link_data, is_log=0)
-            else:
-                exit(1)
+            # if link_type == 'hue':
+            #     link_mqt = link_hue.QueryHue(hue_data=link_data, is_log=0)
+            # elif link_type == 'redash':
+            #     link_mqt = link_redash.QueryRedash(redash_data=link_data, is_log=0)
+            # else:
+            #     exit(1)
+            #
+            # login_info_file = '{0}_login_info'.format(link_type)
+            # if os.path.exists(login_info_file):
+            #     os.remove(login_info_file)
 
-            login_info_file = '{0}_login_info'.format(link_type)
-            if os.path.exists(login_info_file):
-                os.remove(login_info_file)
-
-            if link_mqt.login():
-                print('{0}连接成功'.format(link_type))
-                print(link_mqt.login())
+            # if link_mqt.login():
+            #     print('{0}连接成功'.format(link_type))
+            #     print(link_mqt.login())
+            if 1==1:
                 if check_remeber.GetValue() is True:
                     link_info.set(link_type, 'ip', text_host.GetValue())
                     link_info.set(link_type, 'username', common_func.encryption(text_username.GetValue(), 1))
