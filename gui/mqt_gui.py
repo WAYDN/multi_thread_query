@@ -442,21 +442,20 @@ if __name__ == '__main__':
         link_data['ip'] = text_host.GetValue()
 
         if link_type in link_type_list:
-            # if link_type == 'hue':
-            #     link_mqt = link_hue.QueryHue(hue_data=link_data, is_log=0)
-            # elif link_type == 'redash':
-            #     link_mqt = link_redash.QueryRedash(redash_data=link_data, is_log=0)
-            # else:
-            #     exit(1)
-            #
-            # login_info_file = '{0}_login_info'.format(link_type)
-            # if os.path.exists(login_info_file):
-            #     os.remove(login_info_file)
+            if link_type == 'hue':
+                link_mqt = link_hue.QueryHue(hue_data=link_data, is_log=0)
+            elif link_type == 'redash':
+                link_mqt = link_redash.QueryRedash(redash_data=link_data, is_log=0)
+            else:
+                exit(1)
 
-            # if link_mqt.login():
-            #     print('{0}连接成功'.format(link_type))
-            #     print(link_mqt.login())
-            if 1==1:
+            login_info_file = '{0}_login_info'.format(link_type)
+            if os.path.exists(login_info_file):
+                os.remove(login_info_file)
+
+            if link_mqt.login():
+                print('{0}连接成功'.format(link_type))
+                print(link_mqt.login())
                 if check_remeber.GetValue() is True:
                     link_info.set(link_type, 'ip', text_host.GetValue())
                     link_info.set(link_type, 'username', common_func.encryption(text_username.GetValue(), 1))

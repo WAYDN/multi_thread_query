@@ -209,16 +209,16 @@ class QueryHue:
                     # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
                     time.sleep(5)
                 except Exception as e:
-                    logging.info(e)
-                    logging.info(self.watch_url.format(result_id))
-                    logging.info(watch_req.status_code)
+                    logging.error(e)
+                    logging.error("url:{0},{1}".format(self.watch_url.format(result_id), str(watch_req.status_code)))
         # logging.info("查询结果：{0}".format(result['is_finished']))
         if is_success is True:
             logging.info("<result_id:{0}> {1} 执行成功".format(result_id, exec_date))
         else:
             logging.info("<result_id:{0}> {1} 执行失败".format(result_id, exec_date))
         while tmp_data != [] or i == 0:
-            logging.info("<result_id:{0}> {1} 数据加载中...".format(result_id, exec_date))
+            if i == 0:
+                logging.info("<result_id:{0}> {1} 数据加载中...".format(result_id, exec_date))
             result_req = self.session_opener.get(url=self.result_url.format(result_id, i*100))
             result = json.loads(result_req.text)
             tmp_data = result['results']
