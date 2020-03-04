@@ -199,7 +199,7 @@ class QueryHue:
         result_data = []
         result_columns = []
         i = 0
-        while is_success is False and is_failure is False:
+        while is_success is True or is_failure is True:
             watch_req = self.session_opener.post(url=self.watch_url.format(result_id), data=self.watch_data,
                                                  headers=self.execute_headers)
             watch_result = json.loads(watch_req.text)
