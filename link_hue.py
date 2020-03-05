@@ -199,7 +199,7 @@ class QueryHue:
         result_data = []
         result_columns = []
         i = 0
-        while is_success is not True or is_failure is not False:
+        while is_success is not True and is_failure is not True:
             watch_req = self.session_opener.get(url=self.watch_url.format(result_id), headers=self.execute_headers)
             if watch_req.status_code == 200:
                 try:
