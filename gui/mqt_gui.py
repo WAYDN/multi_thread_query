@@ -87,7 +87,7 @@ class MainGui:
         # 结束提醒
         check_finish = wx.CheckBox(main_panel, label="SQL结束提醒")
         # 进度控件
-        label_gauge_total = wx.StaticText(main_panel, label="总进度: ")
+        label_gauge_total = wx.StaticText(main_panel, label="提交进度: ")
         gauge_total = wx.Gauge(main_panel, -1, 100)
         label_value_total = wx.StaticText(main_panel, label="{0}/{1}:{2}%".
                                           format(str(0).rjust(3), str(0).ljust(3), str(0.00).rjust(5)))
@@ -155,14 +155,14 @@ class MainGui:
                                                                                    'download_path': download_path,
                                                                                    'exec_date': exec_date_value})
                 cnt_num = cnt_num + 1
-                logging.info("当前执行日期:{0},提交进度{1}%".format(exec_date_value, round(1.0*cnt_num/exec_date_num*100, 2)))
-                query_threading.start()
-                if cnt_num % thread_num == 0:
-                    query_threading.join()
                 gauge_value = round(1.0*cnt_num/exec_date_num*100, 2)
+                logging.info("当前执行日期:{0},提交进度{1}%".format(exec_date_value, str(gauge_value)))
                 gauge_total.SetValue(gauge_value)
                 label_value_total.SetLabel("{0}/{1}:{2}%".format(str(cnt_num).rjust(3), str(exec_date_num).ljust(3),
                                                                  str(gauge_value).rjust(5)))
+                query_threading.start()
+                if cnt_num % thread_num == 0:
+                    query_threading.join()
                 # 避免提交过快导致提交重复
                 time.sleep(1.5)
             query_threading.join()
@@ -172,10 +172,6 @@ class MainGui:
                 file_name = '{0}_{1}'.format(self.link_type.lower(), self.exec_date)
             else:
                 file_name = '{0}_{1}_{2}'.format(self.link_type.lower(), query_name, self.exec_date)
-
-            # 线程结束
-            end_time = datetime.datetime.now()
-            logging.info("{0} 累计耗时 {1}".format(query_name, str(end_time-start_time)))
 
             # 返回执行失败的线程
             fail_list = []
@@ -188,6 +184,9 @@ class MainGui:
                 pass
             else:
                 logging.warning("{0} 本次执行失败信息:{1}".format(query_name, ','.join(fail_list)))
+            # 线程结束
+            end_time = datetime.datetime.now()
+            logging.info("{0} 累计耗时 {1}".format(query_name, str(end_time-start_time)).lstrip())
             logging.info("The end is the beginning!")
 
             button_exec.SetLabel("执行")

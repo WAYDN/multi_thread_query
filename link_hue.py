@@ -179,17 +179,27 @@ class QueryHue:
             pass
 
         # 提交sql,并获取result_id
-
-        execute_req = self.session_opener.post(url=self.execute_url, data=self.execute_data, 
-                                               headers=self.execute_headers)
-        execute_result = json.loads(execute_req.text)
-        if execute_result['status'] == 0:
-            result_id = execute_result['id']
-            logging.info('<result_id:{0}> {1} 提交成功'.format(result_id, exec_date))
-            self.result_id_list[result_id] = 0
-            pass
+        commit_num = 0
+        while commit_num < 2:
+            commit_num += 1
+            execute_req = self.session_opener.post(url=self.execute_url, data=self.execute_data,
+                                                   headers=self.execute_headers)
+            try:
+                execute_result = json.loads(execute_req.text)
+            except:
+                logging.error('<error_date:{0}> error_info:{1}'.format(exec_date, 'json解析错误'))
+                self.login()
+                break
+            if execute_result['status'] == 0:
+                result_id = execute_result['id']
+                if commit_num > 1:
+                    logging.info('<result_id:{0}> {1} 重新提交成功'.format(result_id, exec_date))
+                else:
+                    logging.info('<result_id:{0}> {1} 提交成功'.format(result_id, exec_date))
+                self.result_id_list[result_id] = 0
+                break
         else:
-            logging.error(execute_result['message'])
+            logging.error('{0} 提交失败【{1}】'.format(exec_date, execute_result['message']))
             exit(1)
 
         # 获取结果信息
@@ -204,8 +214,8 @@ class QueryHue:
             if watch_req.status_code == 200:
                 try:
                     watch_result = json.loads(watch_req.text)
-                    is_success = watch_result['isSuccess']
-                    is_failure = watch_result['isFailure']
+                    is_success = common_func.true_or_false(watch_result['isSuccess'])
+                    is_failure = common_func.true_or_false(watch_result['isFailure'])
                     # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
                     time.sleep(5)
                 except Exception as e:
@@ -357,5 +367,35 @@ if __name__ == '__main__':
     # print(hue.get_running())
     # print(hue.query('select 123 as a'))
     hue.query_thread("""
-    select '#0#'
-    """, '2018-12-12', '2018-12-15', 1, '%Y-%m-%d', 'day', 2, 'C:\\Users\\admin\\Desktop')
+						select  a.hp_stat_date,
+								a.user_id,
+								a.open_circle_cnt,
+								a.open_lp_jcb_cnt,
+								a.open_lp_zyb_cnt,
+								b.trade_rn
+						  from  (
+								select  hp_stat_date,
+										user_id,
+										count(distinct case when page_id rlike '^(ssbb|jinguchi|cpjh|neican|zstg|quanzi|extra([0-9]+))_50349$' then opentime end) as open_circle_cnt,
+										count(distinct case when objects rlike '(a|p)lp_LB_20200102204345561' then opentime end) as open_lp_jcb_cnt,
+										count(distinct case when objects rlike '(a|p)lp_LB_20191029143055255' then opentime end) as open_lp_zyb_cnt
+								  from  pdw.fact_stock_em_web_log 
+								 where  hp_stat_date >= '2020-01-01'
+								   and  user_id > 0
+								   and  (page_id rlike '^(ssbb|jinguchi|cpjh|neican|zstg|quanzi|extra([0-9]+))_50349$'
+										or objects rlike '(a|p)lp_LB_(20200102204345561|20191029143055255)')
+								   --and  user_id = 136871
+								 group  by hp_stat_date,
+										user_id
+								) a
+						 inner  join (
+								select  day_short_desc,
+										open_number_later_2000 as trade_rn
+								  from  pdw.dim_date 
+								 where  is_open = 1 
+								   and  day_short_desc >= '2020-01-01'
+								   and  day_short_desc <= current_date() 
+								) b 
+							on  a.hp_stat_date = b.day_short_desc
+							limit 100
+    """, '2018-12-12', '2018-12-16', 1, '%Y-%m-%d', 'day', 2)

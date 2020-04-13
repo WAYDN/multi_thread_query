@@ -146,3 +146,20 @@ def get_desktop_path():
     key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders')
     # 返回的是Unicode类型数据
     return winreg.QueryValueEx(key, "Desktop")[0]
+
+
+def true_or_false(x):
+    """
+    如果x不为bool则返回False
+    :param x:
+    :return:
+    """
+    if x is bool:
+        pass
+    elif x == 'False':
+        x = False
+    elif x == 'True':
+        x = True
+    else:
+        x = False
+    return x
