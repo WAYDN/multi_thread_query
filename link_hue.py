@@ -214,8 +214,11 @@ class QueryHue:
             if watch_req.status_code == 200:
                 try:
                     watch_result = json.loads(watch_req.text)
-                    is_success = common_func.true_or_false(watch_result['isSuccess'])
-                    is_failure = common_func.true_or_false(watch_result['isFailure'])
+                    is_success = common_func.is_true(watch_result['isSuccess'])
+                    is_failure = common_func.is_true(watch_result['isFailure'])
+                    print(watch_result)
+                    print(is_failure, is_success)
+                    print(is_success is not True and is_failure is not True)
                     # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
                     time.sleep(5)
                 except Exception as e:

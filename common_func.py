@@ -148,18 +148,15 @@ def get_desktop_path():
     return winreg.QueryValueEx(key, "Desktop")[0]
 
 
-def true_or_false(x):
+def is_true(x):
     """
-    如果x不为bool则返回False
+    如果x不为True则返回False
     :param x:
     :return:
     """
-    if x is bool:
-        pass
-    elif x == 'False':
-        x = False
-    elif x == 'True':
+    if x is True or x == 'True':
         x = True
     else:
         x = False
     return x
+
