@@ -322,7 +322,7 @@ class QueryHue:
             query_threading = threading.Thread(target=self.query, args=(exec_sql_value, 0, download_path,
                                                                         exec_date_value))
             cnt_num = cnt_num + 1
-            logging.info("当前执行日期:{0},提交进度{1}%".format(exec_date_value, round(1.0*cnt_num/exec_date_num*100,2)))
+            logging.info("当前执行日期:{0} 提交进度{1}%".format(exec_date_value, round(1.0*cnt_num/exec_date_num*100, 2)))
             query_threading.start()
             if cnt_num % thread_num == 0:
                 query_threading.join()

@@ -134,7 +134,7 @@ def encryption(crypt, mode=1):
     return result
 # 示例
 # print encryption('wan gqiang')
-# print encryption('v1`mfph`mfS?^?Sv`mfph`mf0123', 0)
+# print(encryption('1023456', 0))
 
 
 def get_desktop_path():
@@ -154,7 +154,7 @@ def is_true(x):
     :param x:
     :return:
     """
-    if x is True or x == 'True':
+    if x in [True, 'True', 'true', 1, 'TRUE']:
         x = True
     else:
         x = False

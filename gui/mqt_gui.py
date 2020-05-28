@@ -156,7 +156,7 @@ class MainGui:
                                                                                    'exec_date': exec_date_value})
                 cnt_num = cnt_num + 1
                 gauge_value = round(1.0*cnt_num/exec_date_num*100, 2)
-                logging.info("当前执行日期:{0},提交进度{1}%".format(exec_date_value, str(gauge_value)))
+                logging.info("当前执行日期:{0} 提交进度{1}%".format(exec_date_value, str(gauge_value)))
                 gauge_total.SetValue(gauge_value)
                 label_value_total.SetLabel("{0}/{1}:{2}%".format(str(cnt_num).rjust(3), str(exec_date_num).ljust(3),
                                                                  str(gauge_value).rjust(5)))
@@ -179,11 +179,18 @@ class MainGui:
             read_log = log.read()
             log.close()
             last_log = re.search(r'((.*\n)+.+The end is the beginning!\n)?((.*\n)*?)$', read_log).group(3)
+            exec_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 提交成功', last_log)]
+            success_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 执行成功', last_log)]
+            lose_list = [i for i in exec_list if i not in success_list]
             fail_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 执行失败', last_log)]
             if len(fail_list) == 0:
                 pass
             else:
                 logging.warning("{0} 本次执行失败信息:{1}".format(query_name, ','.join(fail_list)))
+            if len(lose_list) == 0:
+                pass
+            else:
+                logging.warning("{0} 本次执行遗漏信息:{1}".format(query_name, ','.join(lose_list)))
             # 线程结束
             end_time = datetime.datetime.now()
             logging.info("{0} 累计耗时 {1}".format(query_name, str(end_time-start_time)).lstrip())
@@ -363,6 +370,7 @@ if __name__ == '__main__':
     login_frame.Center()
     login_panel = wx.Panel(login_frame)
 
+    check_remeber = wx.CheckBox(login_panel, label="Remeber", size=(75, 30))
     label_username = wx.StaticText(login_panel, label='Username:', size=(70, 30))
     text_username = wx.TextCtrl(login_panel)
     text_username.SetForegroundColour("#9e9e9e")
@@ -378,7 +386,6 @@ if __name__ == '__main__':
     button_login.SetDefault()
     combobox_link_type = wx.ComboBox(login_panel, value="Link Type", size=(80, 30), choices=link_type_list,
                                      style=wx.CB_DROPDOWN)
-    check_remeber = wx.CheckBox(login_panel, label="Remeber", size=(75, 30))
 
 
     def link_chioce(event):
