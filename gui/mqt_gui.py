@@ -156,7 +156,7 @@ class MainGui:
                                                                                    'exec_date': exec_date_value})
                 cnt_num = cnt_num + 1
                 gauge_value = round(1.0*cnt_num/exec_date_num*100, 2)
-                logging.info("当前执行日期:{0} 提交进度{1}%".format(exec_date_value, str(gauge_value)))
+                logging.info("当前执行日期: {0} 提交进度{1}%".format(exec_date_value, str(gauge_value)))
                 gauge_total.SetValue(gauge_value)
                 label_value_total.SetLabel("{0}/{1}:{2}%".format(str(cnt_num).rjust(3), str(exec_date_num).ljust(3),
                                                                  str(gauge_value).rjust(5)))
@@ -181,16 +181,16 @@ class MainGui:
             last_log = re.search(r'((.*\n)+.+The end is the beginning!\n)?((.*\n)*?)$', read_log).group(3)
             exec_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 提交成功', last_log)]
             success_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 执行成功', last_log)]
-            lose_list = [i for i in exec_list if i not in success_list]
             fail_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 执行失败', last_log)]
+            lose_list = [i for i in exec_list if i not in success_list and i not in fail_list]
             if len(fail_list) == 0:
                 pass
             else:
-                logging.warning("{0} 本次执行失败信息:{1}".format(query_name, ','.join(fail_list)))
+                logging.warning("{0} 本次执行失败的日期:{1}".format(query_name, ','.join(fail_list)))
             if len(lose_list) == 0:
                 pass
             else:
-                logging.warning("{0} 本次执行遗漏信息:{1}".format(query_name, ','.join(lose_list)))
+                logging.warning("{0} 本次执行遗漏的日期:{1}".format(query_name, ','.join(lose_list)))
             # 线程结束
             end_time = datetime.datetime.now()
             logging.info("{0} 累计耗时 {1}".format(query_name, str(end_time-start_time)).lstrip())
@@ -380,10 +380,11 @@ if __name__ == '__main__':
     label_host = wx.StaticText(login_panel, label='Host:', size=(70, 30))
     text_host = wx.TextCtrl(login_panel)
     text_host.SetForegroundColour("#9e9e9e")
-    button_login = wx.Button(login_panel, label='Login', size=(100, 30), style=wx.BORDER_MASK)
-    button_login.SetBackgroundColour("#338BB8")
-    button_login.SetForegroundColour("#FFFFFF")
-    button_login.SetDefault()
+    # button_login = wx.Button(login_panel, label='Login', size=(100, 30), style=wx.NO_BORDER)
+    button_login = wx.Button(login_panel, label='Login', size=(100, 30))
+    # button_login.SetBackgroundColour("#338BB8")
+    # button_login.SetForegroundColour("#FFFFFF")
+    # button_login.SetDefault()
     combobox_link_type = wx.ComboBox(login_panel, value="Link Type", size=(80, 30), choices=link_type_list,
                                      style=wx.CB_DROPDOWN)
 
@@ -425,6 +426,8 @@ if __name__ == '__main__':
 
 
     def login(event):
+        button_login.SetLabel("Login...")
+
         def login_error(error_info):
             global label_login_error, label_login_error_mark
             button_login_pos = button_login.GetPosition()
@@ -440,40 +443,42 @@ if __name__ == '__main__':
             error_msg.setDaemon(True)
             error_msg.start()
 
-        button_login.SetLabel("Login...")
         link_type = combobox_link_type.GetValue()
-        link_data = dict(link_info.items(link_type))
-        link_data['username'] = text_username.GetValue()
-        link_data['password'] = text_password.GetValue()
-        link_data['ip'] = text_host.GetValue()
-
-        if link_type in link_type_list:
-            if link_type == 'hue':
-                link_mqt = link_hue.QueryHue(hue_data=link_data, is_log=0)
-            elif link_type == 'redash':
-                link_mqt = link_redash.QueryRedash(redash_data=link_data, is_log=0)
-            else:
-                exit(1)
-
-            login_info_file = '{0}_login_info'.format(link_type)
-            if os.path.exists(login_info_file):
-                os.remove(login_info_file)
-
-            if link_mqt.login():
-                print('{0}连接成功'.format(link_type))
-                print(link_mqt.login())
-                if check_remeber.GetValue() is True:
-                    link_info.set(link_type, 'ip', text_host.GetValue())
-                    link_info.set(link_type, 'username', common_func.encryption(text_username.GetValue(), 1))
-                    link_info.set(link_type, 'password', common_func.encryption(text_password.GetValue(), 1))
-                    link_info.write(open('link_info.ini', 'r+', encoding="utf-8"))
-                login_frame.Destroy()
-                main = MainGui(link_data, link_type)
-                main.main_app()
-            else:
-                login_error(" Error: Invalid Username or Password or Host")
+        if link_type == 'Link Type':
+            login_error(" Error: LinkType is empty")
         else:
-            login_error(" Error: Invalid LinkType ")
+            link_data = dict(link_info.items(link_type))
+            link_data['username'] = text_username.GetValue()
+            link_data['password'] = text_password.GetValue()
+            link_data['ip'] = text_host.GetValue()
+
+            if link_type in link_type_list:
+                if link_type == 'hue':
+                    link_mqt = link_hue.QueryHue(hue_data=link_data, is_log=0)
+                elif link_type == 'redash':
+                    link_mqt = link_redash.QueryRedash(redash_data=link_data, is_log=0)
+                else:
+                    exit(1)
+
+                login_info_file = '{0}_login_info'.format(link_type)
+                if os.path.exists(login_info_file):
+                    os.remove(login_info_file)
+
+                if link_mqt.login():
+                    print('{0}连接成功'.format(link_type))
+                    print(link_mqt.login())
+                    if check_remeber.GetValue() is True:
+                        link_info.set(link_type, 'ip', text_host.GetValue())
+                        link_info.set(link_type, 'username', common_func.encryption(text_username.GetValue(), 1))
+                        link_info.set(link_type, 'password', common_func.encryption(text_password.GetValue(), 1))
+                        link_info.write(open('link_info.ini', 'r+', encoding="utf-8"))
+                    login_frame.Destroy()
+                    main = MainGui(link_data, link_type)
+                    main.main_app()
+                else:
+                    login_error(" Error: Invalid Username or Password or Host")
+            else:
+                login_error(" Error: Invalid LinkType ")
 
         return label_login_error_mark
 

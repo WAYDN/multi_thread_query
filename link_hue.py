@@ -199,7 +199,8 @@ class QueryHue:
                 self.result_id_list[result_id] = 0
                 break
         else:
-            logging.error('{0} 提交失败【{1}】'.format(exec_date, execute_result['message']))
+            execute_result = json.loads(execute_req.text)
+            logging.error('{0} 提交失败 {1}'.format(exec_date, execute_result['message']))
             exit(1)
 
         # 获取结果信息
@@ -220,10 +221,10 @@ class QueryHue:
                     print(is_failure, is_success)
                     print(is_success is not True and is_failure is not True)
                     # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
-                    time.sleep(5)
                 except Exception as e:
                     logging.error(e)
                     logging.error("url:{0},{1}".format(self.watch_url.format(result_id), str(watch_req.status_code)))
+            time.sleep(5)
         # logging.info("查询结果：{0}".format(result['is_finished']))
         if is_success is True:
             logging.info("<result_id:{0}> {1} 执行成功".format(result_id, exec_date))
@@ -281,7 +282,6 @@ class QueryHue:
         # 查询结束
         end_time = datetime.datetime.now()
         logging.info("<result_id:{0}> {2} 耗时 {1}".format(result_id, str(end_time-start_time), exec_date))
-
         return self.result
 
     def query_thread(self, exec_sql, start_date, end_date, step=1, date_format='%Y%m%d', step_type='day', thread_num=2,
