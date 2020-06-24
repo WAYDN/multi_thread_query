@@ -209,22 +209,24 @@ class QueryHue:
         tmp_data = []
         result_data = []
         result_columns = []
+        watch_limit = 2
         i = 0
-        while is_success is not True and is_failure is not True:
-            watch_req = self.session_opener.get(url=self.watch_url.format(result_id), headers=self.execute_headers)
-            if watch_req.status_code == 200:
-                try:
-                    watch_result = json.loads(watch_req.text)
-                    is_success = common_func.is_true(watch_result['isSuccess'])
-                    is_failure = common_func.is_true(watch_result['isFailure'])
-                    print(watch_result)
-                    print(is_failure, is_success)
-                    print(is_success is not True and is_failure is not True)
-                    # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
-                except Exception as e:
-                    logging.error(e)
-                    logging.error("url:{0},{1}".format(self.watch_url.format(result_id), str(watch_req.status_code)))
-            time.sleep(5)
+        for watch_cnt in range(watch_limit):
+            while is_success is not True and is_failure is not True:
+                watch_req = self.session_opener.get(url=self.watch_url.format(result_id), headers=self.execute_headers)
+                if watch_req.status_code == 200:
+                    try:
+                        watch_result = json.loads(watch_req.text)
+                        is_success = common_func.is_true(watch_result['isSuccess'])
+                        is_failure = common_func.is_true(watch_result['isFailure'])
+                        print(watch_result)
+                        print(is_failure, is_success)
+                        print(is_success is not True and is_failure is not True)
+                        # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
+                    except Exception as e:
+                        logging.error(e)
+                        logging.error("url:{0},{1}".format(self.watch_url.format(result_id), str(watch_req.status_code)))
+                time.sleep(5)
         # logging.info("查询结果：{0}".format(result['is_finished']))
         if is_success is True:
             logging.info("<result_id:{0}> {1} 执行成功".format(result_id, exec_date))
