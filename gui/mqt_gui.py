@@ -16,6 +16,7 @@ import common_func
 import link_hue
 import link_redash
 import sys
+from ping3 import ping
 
 
 def thread_decorator(action_def):
@@ -31,6 +32,7 @@ class MainGui:
         self.link_type = link_type
         self.log_path = os.path.dirname(os.path.realpath(__file__))+"\\log"
         self.exec_date = datetime.datetime.now().strftime('%Y%m%d')
+        self.is_cancel = 0
 
     def main_app(self):
         mgt = wx.App()
@@ -114,6 +116,7 @@ class MainGui:
         def sql_exec(event):
             """sql多线程执行"""
             # 重置
+            self.is_cancel = 0
             button_exec.SetLabel("执行...")
             gauge_total.SetValue(0)
             label_value_total.SetLabel("{0}/{1}:{2}%".format(str(0).rjust(3), str(0).ljust(3), str(0.00).rjust(5)))
@@ -149,22 +152,23 @@ class MainGui:
             logging.info(sql)
             for exec_date_value in exec_date_list:
                 # 此处的date_format与输出的时间格式一致（因）
-                exec_sql_value = common_func.sql_format(exec_sql=sql, exec_date=exec_date_value,
-                                                        date_format=date_format)
-                query_threading = threading.Thread(target=query_mqt.query, kwargs={'exec_sql': exec_sql_value,
-                                                                                   'download_path': download_path,
-                                                                                   'exec_date': exec_date_value})
-                cnt_num = cnt_num + 1
-                gauge_value = round(1.0*cnt_num/exec_date_num*100, 2)
-                logging.info("当前执行日期: {0} 提交进度{1}%".format(exec_date_value, str(gauge_value)))
-                gauge_total.SetValue(gauge_value)
-                label_value_total.SetLabel("{0}/{1}:{2}%".format(str(cnt_num).rjust(3), str(exec_date_num).ljust(3),
-                                                                 str(gauge_value).rjust(5)))
-                query_threading.start()
-                if cnt_num % thread_num == 0:
-                    query_threading.join()
-                # 避免提交过快导致提交重复
-                time.sleep(1.5)
+                if self.is_cancel == 0:
+                    exec_sql_value = common_func.sql_format(exec_sql=sql, exec_date=exec_date_value,
+                                                            date_format=date_format)
+                    query_threading = threading.Thread(target=query_mqt.query, kwargs={'exec_sql': exec_sql_value,
+                                                                                       'download_path': download_path,
+                                                                                       'exec_date': exec_date_value})
+                    cnt_num = cnt_num + 1
+                    gauge_value = round(1.0*cnt_num/exec_date_num*100, 2)
+                    logging.info("当前执行日期: {0} 提交进度{1}%".format(exec_date_value, str(gauge_value)))
+                    gauge_total.SetValue(gauge_value)
+                    label_value_total.SetLabel("{0}/{1}:{2}%".format(str(cnt_num).rjust(3), str(exec_date_num).ljust(3),
+                                                                     str(gauge_value).rjust(5)))
+                    query_threading.start()
+                    if cnt_num % thread_num == 0:
+                        query_threading.join()
+                    # 避免提交过快导致提交重复
+                    time.sleep(1.5)
             query_threading.join()
 
             query_name = text_query_name.GetValue()
@@ -182,7 +186,15 @@ class MainGui:
             exec_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 提交成功', last_log)]
             success_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 执行成功', last_log)]
             fail_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 执行失败', last_log)]
-            lose_list = [i for i in exec_list if i not in success_list and i not in fail_list]
+            lose_list = []
+            for i in exec_list:
+                if i not in success_list and i not in fail_list:
+                    watch_result = query_mqt.watch(i)
+                    is_success = watch_result[0]
+                    if is_success is True:
+                        pass
+                    else:
+                        lose_list.append(i)
             if len(fail_list) == 0:
                 pass
             else:
@@ -210,6 +222,7 @@ class MainGui:
             :return:
             """
             # 执行预设
+            self.is_cancel = 1
             button_cancel.SetLabel('自杀...')
             query_name = text_query_name.GetValue()
             if query_name.strip() == '':
@@ -253,9 +266,9 @@ class MainGui:
         def is_close(event):
             """主框架窗口关闭提醒"""
             message_list = [
-                "醉不成欢惨将别,别时茫茫江浸月 \n                                           —— 白居易",
+                "醉不成欢惨将别，别时茫茫江浸月 \n                                           —— 白居易",
                 "天下伤心处，劳劳送客亭 \n                                           —— 李白",
-                "丈夫非无泪,不洒离别间 \n                                           —— 陆龟蒙",
+                "丈夫非无泪，不洒离别间 \n                                           —— 陆龟蒙",
                 "一曲离歌两行泪，不知何地再逢君 \n                                           —— 韦庄",
                 "人生不相见，动如参与商 \n                                           —— 杜甫",
                 "仰天大笑出门去，我辈岂是蓬蒿人 \n                                           —— 李白",
@@ -282,11 +295,12 @@ class MainGui:
             label_help = wx.StaticText(main_panel)
             label_help.SetLabel(u"""
     使用条例：
-    1.执行前请先填写本次执行的任务名称，以便保存记录
-    2.代码多线程执行前请先校验，校验通过后再执行
-    3.程序执行日志保存在程序所在的文件夹
-    4.若中途发现执行错误，请选择自杀
-    5.如要强制关闭，请到任务管理器中结束进程
+    1.执行前请先填写本次执行的任务名称，以便保存记录 
+    2.代码多线程执行前请先校验，校验通过后再执行 
+    3.程序执行日志保存在程序所在的文件夹 
+    4.若中途发现执行错误，请选择自杀 
+    5.如要强制关闭，请到任务管理器中结束进程 
+    6.日期通配符 #n# ,n表示距今天数
             """)
             label_help.SetPosition((button_help.GetPosition()[0]-label_help.GetSize()[0], button_help.GetPosition()[1]))
             label_help.SetBackgroundColour('#3299CC')
@@ -459,14 +473,13 @@ if __name__ == '__main__':
                     link_mqt = link_redash.QueryRedash(redash_data=link_data, is_log=0)
                 else:
                     exit(1)
-
                 login_info_file = '{0}_login_info'.format(link_type)
                 if os.path.exists(login_info_file):
                     os.remove(login_info_file)
-
-                if link_mqt.login():
+                try:
+                    login_status = link_mqt.login()
                     print('{0}连接成功'.format(link_type))
-                    print(link_mqt.login())
+                    print(login_status)
                     if check_remeber.GetValue() is True:
                         link_info.set(link_type, 'ip', text_host.GetValue())
                         link_info.set(link_type, 'username', common_func.encryption(text_username.GetValue(), 1))
@@ -475,8 +488,12 @@ if __name__ == '__main__':
                     login_frame.Destroy()
                     main = MainGui(link_data, link_type)
                     main.main_app()
-                else:
-                    login_error(" Error: Invalid Username or Password or Host")
+                except Exception as e:
+                    if ping(link_data['ip']):
+                        login_error(" Error: Invalid Username or Password ")
+                    else:
+                        login_error(" Error: Host Is Error ")
+                    logging.warning(e)
             else:
                 login_error(" Error: Invalid LinkType ")
 

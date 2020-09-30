@@ -114,13 +114,12 @@ class QueryHue:
         csrf_req = self.session_opener.get(self.csrf_url)
         csrf_req_context = csrf_req.text
         csrfmiddlewaretoken = re.search(r"csrfmiddlewaretoken' value='(.*)' />", csrf_req_context).group(1)
-
-        # 登录hue,获取新cookie的csrftoken
-        self.login_data['csrfmiddlewaretoken'] = csrfmiddlewaretoken
-        login_req = self.session_opener.post(url=self.login_url, data=self.login_data, headers=self.csrf_headers)
-        self.csrf_token = login_req.cookies['csrftoken']
         # GUI登录判断
         try:
+            # 登录hue,获取新cookie的csrftoken
+            self.login_data['csrfmiddlewaretoken'] = csrfmiddlewaretoken
+            login_req = self.session_opener.post(url=self.login_url, data=self.login_data, headers=self.csrf_headers)
+            self.csrf_token = login_req.cookies['csrftoken']
             self.execute_headers['X-CSRFToken'] = self.csrf_token
             self.session_opener.post(url=self.explain_url, data=self.execute_data, headers=self.execute_headers)
             return True
@@ -145,6 +144,29 @@ class QueryHue:
             logging.info("校验通过")
         else:
             logging.error(explain_reuslt['message'])
+
+    def watch(self, result_id):
+        is_failure = False
+        is_success = False
+        watch_limit = 2
+        for watch_cnt in range(watch_limit):
+            while is_success is not True and is_failure is not True:
+                watch_req = self.session_opener.get(url=self.watch_url.format(result_id), headers=self.execute_headers)
+                if watch_req.status_code == 200:
+                    try:
+                        watch_result = json.loads(watch_req.text)
+                        is_success = common_func.is_true(watch_result['isSuccess'])
+                        is_failure = common_func.is_true(watch_result['isFailure'])
+                        print(watch_result)
+                        print(is_failure, is_success)
+                        print(is_success is not True and is_failure is not True)
+                        # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
+                    except Exception as e:
+                        logging.error(e)
+                        logging.error("url:{0},{1}".format(self.watch_url.format(result_id), str(watch_req.status_code)))
+                time.sleep(5)
+        # logging.info("查询结果：{0}".format(result['is_finished']))
+        return [is_success, is_failure]
 
     def query(self, exec_sql=None, is_explain=0, download_path=None, exec_date=None, download_file_name=None):
         """
@@ -204,30 +226,13 @@ class QueryHue:
             exit(1)
 
         # 获取结果信息
-        is_success = False
-        is_failure = False
         tmp_data = []
         result_data = []
         result_columns = []
-        watch_limit = 2
         i = 0
-        for watch_cnt in range(watch_limit):
-            while is_success is not True and is_failure is not True:
-                watch_req = self.session_opener.get(url=self.watch_url.format(result_id), headers=self.execute_headers)
-                if watch_req.status_code == 200:
-                    try:
-                        watch_result = json.loads(watch_req.text)
-                        is_success = common_func.is_true(watch_result['isSuccess'])
-                        is_failure = common_func.is_true(watch_result['isFailure'])
-                        print(watch_result)
-                        print(is_failure, is_success)
-                        print(is_success is not True and is_failure is not True)
-                        # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
-                    except Exception as e:
-                        logging.error(e)
-                        logging.error("url:{0},{1}".format(self.watch_url.format(result_id), str(watch_req.status_code)))
-                time.sleep(5)
-        # logging.info("查询结果：{0}".format(result['is_finished']))
+        watch_result = self.watch(result_id)
+        is_success = watch_result[0]
+        is_failure = watch_result[1]
         if is_success is True:
             logging.info("<result_id:{0}> {1} 执行成功".format(result_id, exec_date))
         else:

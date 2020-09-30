@@ -74,7 +74,8 @@ def log(file_name=None, file_path='E:\\log'):
     :param file_path string/日志文件夹
     :return
     """
-    formatter = logging.Formatter('%(asctime)s [%(filename)s:%(funcName)s line:%(lineno)d] [%(levelname)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    formatter = logging.Formatter('%(asctime)s [%(filename)s:%(funcName)s line:%(lineno)d] [%(levelname)s]: %(message)s',
+                                  datefmt='%Y-%m-%d %H:%M:%S')
     logger = logging.getLogger('')
     logger.setLevel(logging.INFO)
 
@@ -100,7 +101,7 @@ def log(file_name=None, file_path='E:\\log'):
         # file_log.setLevel(logging.DEBUG)
         file_log.setFormatter(formatter)
         logger.addHandler(file_log)
-# 示例
+# # 示例
 # log()
 # logging.error('2131231')
 # logging.info('2131231')
