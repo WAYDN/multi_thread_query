@@ -58,7 +58,9 @@ def sql_format(exec_sql, exec_date, date_format='%Y%m%d'):
     """
     re_list = re.findall('#(-?\d+)#', exec_sql)
     for i in re_list:
-        exec_sql = re.sub('#{0}#'.format(i), (datetime.datetime.strptime(str(exec_date), date_format)+datetime.timedelta(days=int(i))).strftime(date_format), exec_sql)
+        exec_sql = re.sub('#{0}#'.format(i),
+                          (datetime.datetime.strptime(str(exec_date), date_format)
+                           + datetime.timedelta(days=int(i))).strftime(date_format), exec_sql)
     exec_sql = re.sub(r'\\', r'\\', exec_sql)
 
     return exec_sql
