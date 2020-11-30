@@ -64,9 +64,11 @@ def sql_format(exec_sql, exec_date, date_format='%Y%m%d'):
     exec_sql = re.sub(r'\\', r'\\', exec_sql)
 
     return exec_sql
-# 示例
-# sql = """SELECT #-1#, '\\d' FROM pdw.pdw_account_settle  LIMIT 1"""
-# print sql_format(sql, '2018-0501', date_format='%Y-%m%d')
+
+
+# # 示例
+# sql = "create table db_test.wq_dws_user_page_online_state_dd_#0#"
+# print(sql_format(sql, '2018-05-01', date_format='%Y-%m-%d'))
 
 
 def log(file_name=None, file_path='E:\\log'):

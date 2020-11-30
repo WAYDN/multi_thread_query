@@ -239,19 +239,20 @@ class QueryHue:
         is_failure = watch_result[1]
         if is_success is True:
             logging.info("<result_id:{0}> {1} 执行成功".format(result_id, exec_date))
+            self.result_id_list[result_id] = 1
+            while tmp_data != [] or i == 0:
+                if i == 0:
+                    logging.info("<result_id:{0}> {1} 数据加载中...".format(result_id, exec_date))
+                result_req = self.session_opener.get(url=self.result_url.format(result_id, i*100))
+                result = json.loads(result_req.text)
+                tmp_data = result['results']
+                result_data += tmp_data
+                result_columns = result['columns']
+                i += 1
+            logging.info("<result_id:{0}> {1} 数据加载成功".format(result_id, exec_date))
         else:
             logging.info("<result_id:{0}> {1} 执行失败".format(result_id, exec_date))
-        while tmp_data != [] or i == 0:
-            if i == 0:
-                logging.info("<result_id:{0}> {1} 数据加载中...".format(result_id, exec_date))
-            result_req = self.session_opener.get(url=self.result_url.format(result_id, i*100))
-            result = json.loads(result_req.text)
-            tmp_data = result['results']
-            result_data += tmp_data
-            result_columns = result['columns']
-            i += 1
-        logging.info("<result_id:{0}> {1} 数据加载成功".format(result_id, exec_date))
-        self.result_id_list[result_id] = 1
+            self.result_id_list[result_id] = -1
         # print self.result_url.format(result_id)
         # print(result_data)
 
@@ -374,25 +375,28 @@ if __name__ == '__main__':
     link_info = configparser.ConfigParser()
     link_info.read(os.getcwd()+'/gui/link_info.ini')
     hue_info = dict(link_info.items('hue'))
-    hue_info['ip'] = 'http://188.166.1.87:8889'
-    hue_info['username'] = 'wangq'
-    hue_info['password'] = '123456'
+    # hue_info['ip'] = 'http://188.166.1.95:8888'
+    # hue_info['username'] = 'wangq'
+    # hue_info['password'] = '123456'
     hue = QueryHue(hue_info, '123')
+    hue.login()
+    # hue.get_running()
+    # hue.cancel(10555)
     # print(hue.get_running())
     # print(hue.query('select 123 as a'))
-    hue.query_thread("""
-        select  hp_stat_date,
-                user_id,
-                count(distinct case when page_id rlike '^(ssbb|jinguchi|cpjh|neican|zstg|quanzi|extra([0-9]+))_50349$' then opentime end) as open_circle_cnt,
-                count(distinct case when objects rlike '(a|p)lp_LB_20200102204345561' then opentime end) as open_lp_jcb_cnt,
-                count(distinct case when objects rlike '(a|p)lp_LB_20191029143055255' then opentime end) as open_lp_zyb_cnt
-          from  pdw.fact_stock_em_web_log 
-         where  hp_stat_date >= '2020-01-01'
-           and  user_id > 0
-           and  (page_id rlike '^(ssbb|jinguchi|cpjh|neican|zstg|quanzi|extra([0-9]+))_50349$'
-                or objects rlike '(a|p)lp_LB_(20200102204345561|20191029143055255)')
-           --and  user_id = 136871
-         group  by hp_stat_date,
-                user_id
-         limit 100
-    """, '2018-12-12', '2018-12-16', 1, '%Y-%m-%d', 'day', 2)
+    # hue.query_thread("""
+    #     select  hp_stat_date,
+    #             user_id,
+    #             count(distinct case when page_id rlike '^(ssbb|jinguchi|cpjh|neican|zstg|quanzi|extra([0-9]+))_50349$' then opentime end) as open_circle_cnt,
+    #             count(distinct case when objects rlike '(a|p)lp_LB_20200102204345561' then opentime end) as open_lp_jcb_cnt,
+    #             count(distinct case when objects rlike '(a|p)lp_LB_20191029143055255' then opentime end) as open_lp_zyb_cnt
+    #       from  pdw.fact_stock_em_web_log
+    #      where  hp_stat_date >= '2020-01-01'
+    #        and  user_id > 0
+    #        and  (page_id rlike '^(ssbb|jinguchi|cpjh|neican|zstg|quanzi|extra([0-9]+))_50349$'
+    #             or objects rlike '(a|p)lp_LB_(20200102204345561|20191029143055255)')
+    #        --and  user_id = 136871
+    #      group  by hp_stat_date,
+    #             user_id
+    #      limit 100
+    # """, '2018-12-12', '2018-12-16', 1, '%Y-%m-%d', 'day', 2)

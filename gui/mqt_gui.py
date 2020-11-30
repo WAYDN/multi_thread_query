@@ -255,6 +255,10 @@ class MainGui(wx.Frame):
         # 修复线程判断
         if len(self.repair_list) > 0:
             exec_date_list = self.repair_list
+            if step > 0:
+                exec_date_list.sort()
+            else:
+                exec_date_list.reverse()
         else:
             exec_date_list = common_func.exec_date(start_date=start_date, end_date=end_date, step=step,
                                                    date_format=date_format, step_type=step_type)
