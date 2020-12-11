@@ -157,9 +157,9 @@ class QueryHue:
                         watch_result = json.loads(watch_req.text)
                         is_success = common_func.is_true(watch_result['isSuccess'])
                         is_failure = common_func.is_true(watch_result['isFailure'])
-                        print(watch_result)
-                        print(is_failure, is_success)
-                        print(is_success is not True and is_failure is not True)
+                        # print(watch_result)
+                        # print(is_failure, is_success)
+                        # print(is_success is not True and is_failure is not True)
                         # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
                     except Exception as e:
                         logging.error(e)
@@ -243,6 +243,7 @@ class QueryHue:
             while tmp_data != [] or i == 0:
                 if i == 0:
                     logging.info("<result_id:{0}> {1} 数据加载中...".format(result_id, exec_date))
+                # 页面数据预加载上限100
                 result_req = self.session_opener.get(url=self.result_url.format(result_id, i*100))
                 result = json.loads(result_req.text)
                 tmp_data = result['results']
@@ -253,22 +254,17 @@ class QueryHue:
         else:
             logging.info("<result_id:{0}> {1} 执行失败".format(result_id, exec_date))
             self.result_id_list[result_id] = -1
-        # print self.result_url.format(result_id)
-        # print(result_data)
-
         if download_path is None or download_path == '' or result_data == [] or is_failure is True:
             pass
         else:
             # 每1000条写入一次数据
             max_col_num = len(result_data)
             if max_col_num > 5000:
-                logging.info("<result_id:{0}> {1} {2}条数据下载中...".format(result_id, exec_date, max_col_num))
-            for_num = int(math.ceil(max_col_num/1000.0))
+                logging.info("<result_id:{0}> {1} {2}条数据写入中...".format(result_id, exec_date, max_col_num))
+            for_num = int(math.ceil(max_col_num/1000))
             for for_i in range(for_num):
                 result_text = ''
                 for result_value in result_data[for_i*1000: min(for_i*1000+1000, max_col_num)]:
-                    # print result_value
-                    # print([type(i) for i in result_value])
                     result_text = result_text + '\n' + '\t'.join([str(i) for i in result_value])
                 if not os.path.exists(download_path):
                     os.mkdir(download_path)
@@ -277,7 +273,6 @@ class QueryHue:
                 else:
                     file_path = '{0}/{1}.txt'.format(download_path, download_file_name)
                 if not os.path.exists(file_path):
-                    # print [i['name'] for i in result['columns']]
                     result_text = '\t'.join([i['name'] for i in result_columns]) + result_text
                 result_text = unescape(result_text).replace('&nbsp;', ' ')
                 result_file = open(file_path, 'a+', encoding='utf-8')
@@ -372,31 +367,14 @@ class QueryHue:
 
 if __name__ == '__main__':
     import configparser
+    import common_func
     link_info = configparser.ConfigParser()
     link_info.read(os.getcwd()+'/gui/link_info.ini')
     hue_info = dict(link_info.items('hue'))
-    # hue_info['ip'] = 'http://188.166.1.95:8888'
-    # hue_info['username'] = 'wangq'
-    # hue_info['password'] = '123456'
+    hue_info['username'] = common_func.encryption(hue_info['username'], 0)
+    hue_info['password'] = common_func.encryption(hue_info['password'], 0)
     hue = QueryHue(hue_info, '123')
     hue.login()
-    # hue.get_running()
-    # hue.cancel(10555)
-    # print(hue.get_running())
-    # print(hue.query('select 123 as a'))
-    # hue.query_thread("""
-    #     select  hp_stat_date,
-    #             user_id,
-    #             count(distinct case when page_id rlike '^(ssbb|jinguchi|cpjh|neican|zstg|quanzi|extra([0-9]+))_50349$' then opentime end) as open_circle_cnt,
-    #             count(distinct case when objects rlike '(a|p)lp_LB_20200102204345561' then opentime end) as open_lp_jcb_cnt,
-    #             count(distinct case when objects rlike '(a|p)lp_LB_20191029143055255' then opentime end) as open_lp_zyb_cnt
-    #       from  pdw.fact_stock_em_web_log
-    #      where  hp_stat_date >= '2020-01-01'
-    #        and  user_id > 0
-    #        and  (page_id rlike '^(ssbb|jinguchi|cpjh|neican|zstg|quanzi|extra([0-9]+))_50349$'
-    #             or objects rlike '(a|p)lp_LB_(20200102204345561|20191029143055255)')
-    #        --and  user_id = 136871
-    #      group  by hp_stat_date,
-    #             user_id
-    #      limit 100
-    # """, '2018-12-12', '2018-12-16', 1, '%Y-%m-%d', 'day', 2)
+    # exec_sql=None, is_explain=0, download_path=None, exec_date=None, download_file_name=None
+    hue.query(exec_sql="select user_id from db_tag.dwd_user_tag_dd where tag_id = 'underline_pay_lose'",
+              download_path='C:\\Users\\admin\\Desktop\\')

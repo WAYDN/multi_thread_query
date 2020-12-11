@@ -43,6 +43,7 @@ class MainGui(wx.Frame):
 
         # 控件定义
         # 预设参数
+        self.verse = common_func.get_verse()
         self.date_format_list = ['%Y-%m-%d', '%Y%m%d']
         self.step_type_list = ['day', 'month']
         self.repair_list = []
@@ -445,22 +446,26 @@ class MainGui(wx.Frame):
 
     def is_close(self, event):
         """主框架窗口关闭提醒"""
-        message_list = [
-            "醉不成欢惨将别，别时茫茫江浸月 \n                                           —— 白居易",
-            "天下伤心处，劳劳送客亭 \n                                           —— 李白",
-            "丈夫非无泪，不洒离别间 \n                                           —— 陆龟蒙",
-            "一曲离歌两行泪，不知何地再逢君 \n                                           —— 韦庄",
-            "人生不相见，动如参与商 \n                                           —— 杜甫",
-            "仰天大笑出门去，我辈岂是蓬蒿人 \n                                           —— 李白",
-            "弃我去者，昨日之日不可留 \n                                           —— 李白",
-            "寒雨连江夜入吴，平明送客楚山孤 \n                                         —— 王昌龄",
-            "轮台东门送君去，雪上空留马行处 \n                                          —— 岑参",
-            "一看肠一断，好去莫回头 \n                                          —— 白居易",
-            "最是人间留不住，朱颜辞镜花辞树 \n                                          —— 王国维",
-            "直须看尽洛城花，始共春风容易别 \n                                          —— 欧阳修",
-            "挥手自兹去，萧萧班马鸣 \n                                           —— 李白"
-        ]
-        dialog_close = wx.MessageDialog(None, message=message_list[int(random.random()*5)], caption="关闭",
+        if len(self.verse) > 1:
+            pass
+        else:
+            message_list = [
+                "醉不成欢惨将别，别时茫茫江浸月 \n                                           —— 白居易",
+                "天下伤心处，劳劳送客亭 \n                                           —— 李白",
+                "丈夫非无泪，不洒离别间 \n                                           —— 陆龟蒙",
+                "一曲离歌两行泪，不知何地再逢君 \n                                           —— 韦庄",
+                "人生不相见，动如参与商 \n                                           —— 杜甫",
+                "仰天大笑出门去，我辈岂是蓬蒿人 \n                                           —— 李白",
+                "弃我去者，昨日之日不可留 \n                                           —— 李白",
+                "寒雨连江夜入吴，平明送客楚山孤 \n                                         —— 王昌龄",
+                "轮台东门送君去，雪上空留马行处 \n                                          —— 岑参",
+                "一看肠一断，好去莫回头 \n                                          —— 白居易",
+                "最是人间留不住，朱颜辞镜花辞树 \n                                          —— 王国维",
+                "直须看尽洛城花，始共春风容易别 \n                                          —— 欧阳修",
+                "挥手自兹去，萧萧班马鸣 \n                                           —— 李白"
+            ]
+            self.verse = message_list[int(random.random()*5)]
+        dialog_close = wx.MessageDialog(None, message=self.verse, caption="关闭",
                                         style=wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING)
         dc = dialog_close.ShowModal()
         if dc == wx.EVT_CLOSE or dc == wx.ID_YES:
@@ -470,19 +475,21 @@ class MainGui(wx.Frame):
             os.kill(os.getpid(), signal.SIGINT)
         else:
             pass
+        self.verse = common_func.get_verse()
 
     def label_help_show(self, event):
         global label_help
         label_help = wx.StaticText(self.main_panel)
         label_help.SetLabel(u"""
-        使用条例：
-        1.执行前请先填写本次执行的任务名称，以便保存记录 
-        2.代码多线程执行前请先校验，校验通过后再执行 
-        3.程序执行日志保存在程序所在的文件夹 
-        4.若中途发现执行错误，请选择自杀 
-        5.如要强制关闭，请到任务管理器中结束进程 
-        6.日期通配符 #n# ,n表示距今天数
-        """)
+    使用条例：
+    1.执行前请先填写本次执行的任务名称，以便保存记录 
+    2.代码多线程执行前请先校验，校验通过后再执行 
+    3.程序执行日志保存在程序所在的文件夹 
+    4.若中途发现执行错误，请选择自杀 
+    5.如要强制关闭，请到任务管理器中结束进程 
+    6.日期通配符 #n#，n表示距执行日天数
+        例：#0# = {0} 
+        """.format(self.picker_start_date.GetValue().Format(self.combobox_date_format.GetValue())))
         label_help.SetPosition((self.button_help.GetPosition()[0]-label_help.GetSize()[0],
                                 self.button_help.GetPosition()[1]))
         label_help.SetBackgroundColour('#3299CC')

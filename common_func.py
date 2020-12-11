@@ -5,6 +5,8 @@ import re
 import logging
 import os
 import winreg
+import requests
+import json
 
 
 def exec_date(start_date, end_date, step=1, date_format='%Y%m%d', step_type='day'):
@@ -165,3 +167,20 @@ def is_true(x):
         x = False
     return x
 
+
+def get_verse():
+    """
+    获取随机诗句
+    """
+    session_opener = requests.session()
+    session_opener.verify = False
+    verse_data = session_opener.get(url='http://v1.alapi.cn/api/shici')
+    if verse_data.status_code == 200:
+        verse_json = json.loads(verse_data.text)
+        return "{0} \n                                           —— {1}".\
+            format(re.search('([\u4E00-\u9FA5]|，)+', verse_json['data']['content']).group(),
+                   verse_json['data']['author'])
+    else:
+        print(verse_data.status_code)
+
+# print(get_verse())
