@@ -191,6 +191,10 @@ class QueryHue:
         else:
             self.execute_data['query-query'] = exec_sql
             self.watch_data['query-query'] = exec_sql
+            if re.search('(insert|create) ', exec_sql.lower()) is not None:
+                is_skip_load = 1
+            else:
+                is_skip_load = 0
 
         # 校验sql
         if type(is_explain) is not int:
@@ -240,20 +244,22 @@ class QueryHue:
         if is_success is True:
             logging.info("<result_id:{0}> {1} 执行成功".format(result_id, exec_date))
             self.result_id_list[result_id] = 1
-            while tmp_data != [] or i == 0:
-                if i == 0:
-                    logging.info("<result_id:{0}> {1} 数据加载中...".format(result_id, exec_date))
-                # 页面数据预加载上限100
-                result_req = self.session_opener.get(url=self.result_url.format(result_id, i*100))
-                result = json.loads(result_req.text)
-                tmp_data = result['results']
-                result_data += tmp_data
-                result_columns = result['columns']
-                i += 1
-            logging.info("<result_id:{0}> {1} 数据加载成功".format(result_id, exec_date))
+            if is_skip_load == 0:
+                while tmp_data != [] or i == 0:
+                    if i == 0:
+                        logging.info("<result_id:{0}> {1} 数据加载中...".format(result_id, exec_date))
+                    # 页面数据预加载上限100
+                    result_req = self.session_opener.get(url=self.result_url.format(result_id, i*100))
+                    result = json.loads(result_req.text)
+                    tmp_data = result['results']
+                    result_data += tmp_data
+                    result_columns = result['columns']
+                    i += 1
+                logging.info("<result_id:{0}> {1} 数据加载成功".format(result_id, exec_date))
         else:
             logging.info("<result_id:{0}> {1} 执行失败".format(result_id, exec_date))
             self.result_id_list[result_id] = -1
+
         if download_path is None or download_path == '' or result_data == [] or is_failure is True:
             pass
         else:

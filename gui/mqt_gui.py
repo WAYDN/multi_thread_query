@@ -337,8 +337,10 @@ class MainGui(wx.Frame):
                 self.dialog_repair.EndModal(wx.ID_OK)
             else:
                 pass
-        else:
+        elif self.dialog_repair.IsModal():
             self.dialog_repair.EndModal(wx.ID_OK)
+        else:
+            pass
 
         # 线程结束
         end_time = datetime.datetime.now()
