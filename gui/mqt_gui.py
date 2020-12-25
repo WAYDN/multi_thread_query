@@ -297,9 +297,12 @@ class MainGui(wx.Frame):
         last_log = re.search(r'((.*\n)+.+(The end is the beginning!|#*线程修复#*)\n)?((.*\n)*?)$', read_log).group(4)
         print(last_log)
         will_submit_list = [i[0] for i in re.findall(r'当前执行日期: ((\d-?)+)', last_log)]
-        submit_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 提交成功', last_log)]
+        submit_dict = dict([(i[2], i[0]) for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 提交成功', last_log)])
         success_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 执行成功', last_log)]
         self.exec_fail_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 执行失败', last_log)]
+        if self.is_cancel == 1:
+            max_submit_date = will_submit_list[-1]
+            exec_date_list = exec_date_list[:exec_date_list.index(max_submit_date)+1]
         self.submit_lose_list = []
         self.submit_error_list = []
         lose_success_list = []
@@ -307,11 +310,10 @@ class MainGui(wx.Frame):
         for i in exec_date_list:
             if i not in will_submit_list:
                 self.submit_lose_list.append(i)
-            elif i not in submit_list:
+            elif i not in submit_dict.keys():
                 self.submit_error_list.append(i)
             elif i not in success_list and i not in self.exec_fail_list:
-                print(i)
-                watch_result = query_mqt.watch(i)
+                watch_result = query_mqt.watch(submit_dict[i])
                 is_success = watch_result[0]
                 if is_success is True:
                     lose_success_list.append(i)
@@ -343,6 +345,7 @@ class MainGui(wx.Frame):
             pass
 
         # 线程结束
+        time.sleep(5)
         end_time = datetime.datetime.now()
         logging.info("{0} 累计耗时 {1}".format(query_name, str(end_time-start_time)).lstrip())
         logging.info("The end is the beginning!")

@@ -148,24 +148,25 @@ class QueryHue:
     def watch(self, result_id):
         is_failure = False
         is_success = False
-        watch_limit = 2
-        for watch_cnt in range(watch_limit):
-            while is_success is not True and is_failure is not True:
-                watch_req = self.session_opener.get(url=self.watch_url.format(result_id), headers=self.execute_headers)
-                if watch_req.status_code == 200:
-                    try:
-                        watch_result = json.loads(watch_req.text)
-                        is_success = common_func.is_true(watch_result['isSuccess'])
-                        is_failure = common_func.is_true(watch_result['isFailure'])
-                        # print(watch_result)
-                        # print(is_failure, is_success)
-                        # print(is_success is not True and is_failure is not True)
-                        # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
-                    except Exception as e:
-                        logging.error(e)
-                        logging.error("url:{0},{1}".format(self.watch_url.format(result_id),
-                                                           str(watch_req.status_code)))
-                time.sleep(5)
+        watch_cnt = 0
+        while is_success is not True and is_failure is not True and watch_cnt < 2:
+            watch_req = self.session_opener.get(url=self.watch_url.format(result_id), headers=self.execute_headers)
+            if watch_req.status_code == 200:
+                try:
+                    watch_result = json.loads(watch_req.text)
+                    is_success = common_func.is_true(watch_result['isSuccess'])
+                    is_failure = common_func.is_true(watch_result['isFailure'])
+                    # print(watch_result)
+                    # print(is_failure, is_success)
+                    # print(is_success is not True and is_failure is not True)
+                    # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
+                except Exception as e:
+                    logging.error('{0},{1}'.format(e, self.watch_url.format(result_id)))
+                    watch_cnt += 1
+            else:
+                logging.error("url:{0},{1}".format(self.watch_url.format(result_id), str(watch_req.status_code)))
+                watch_cnt += 1
+            time.sleep(5)
         # logging.info("查询结果：{0}".format(result['is_finished']))
         return [is_success, is_failure]
 
@@ -382,5 +383,6 @@ if __name__ == '__main__':
     hue = QueryHue(hue_info, '123')
     hue.login()
     # exec_sql=None, is_explain=0, download_path=None, exec_date=None, download_file_name=None
-    hue.query(exec_sql="select user_id from db_tag.dwd_user_tag_dd where tag_id = 'underline_pay_lose'",
-              download_path='C:\\Users\\admin\\Desktop\\')
+    # hue.query(exec_sql="select tag_id, count(1),count(distinct user_id) from db_tag.dwd_user_tag_dd group by tag_id",
+    #           download_path='C:\\Users\\admin\\Desktop\\')
+    hue.watch('11705')
