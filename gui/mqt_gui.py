@@ -50,6 +50,7 @@ class MainGui(wx.Frame):
         self.exec_fail_list = []
         self.submit_error_list = []
         self.submit_lose_list = []
+        self.is_print_sql = 1
         # 参数控件
         self.label_start_date = wx.StaticText(self.main_panel, label="开始日期")
         self.picker_start_date = wa.DatePickerCtrl(self.main_panel, id=-1, style=wa.DP_DROPDOWN | wa.DP_SHOWCENTURY)
@@ -195,7 +196,7 @@ class MainGui(wx.Frame):
         else:
             self.text_log.SetLabel("当前连接不支持sql校验")
 
-    def thread_exec(self, exec_date_list, sql, date_format, query_mqt, download_path, thread_num):
+    def thread_exec(self, exec_date_list, sql, date_format, query_mqt, download_path, thread_num, is_print_sql):
         """
         多线程执行块
         :param exec_date_list:
@@ -204,12 +205,14 @@ class MainGui(wx.Frame):
         :param query_mqt:
         :param download_path:
         :param thread_num:
+        :param is_print_sql:
         :return:
         """
         cnt_num = 0
         exec_date_num = len(exec_date_list)
         self.label_value_total.SetLabel("{0}/{1}".format(str(cnt_num), str(exec_date_num)))
-        logging.info(sql)
+        if is_print_sql == 1:
+            logging.info(sql)
         for exec_date_value in exec_date_list:
             # 此处的date_format与输出的时间格式一致（因）
             print(self.is_cancel)
@@ -283,7 +286,7 @@ class MainGui(wx.Frame):
         start_time = datetime.datetime.now()
 
         # 多线程执行
-        self.thread_exec(exec_date_list, sql, date_format, query_mqt, download_path, thread_num)
+        self.thread_exec(exec_date_list, sql, date_format, query_mqt, download_path, thread_num, self.is_print_sql)
 
         # 返回执行失败的日期
         query_name = self.text_query_name.GetValue()
@@ -375,6 +378,7 @@ class MainGui(wx.Frame):
             logging.warning("###############################线程修复###############################")
             print(self.repair_list)
             self.dialog_repair.EndModal(wx.ID_OK)
+            self.is_print_sql = 0
             self.sql_exec(event)
         else:
             self.dialog_repair.Destroy()
