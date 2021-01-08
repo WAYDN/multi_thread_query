@@ -642,18 +642,19 @@ class LoginGui(wx.Frame):
                     os.remove(login_info_file)
                 try:
                     login_status = link_mqt.login()
-                    print('{0}连接成功'.format(self.link_type))
-                    print(login_status)
-                    if self.check_remeber.GetValue() is True:
-                        self.link_info.set(self.link_type, 'ip', self.text_host.GetValue())
-                        self.link_info.set(self.link_type, 'username', common_func.encryption(
-                            self.text_username.GetValue(), 1))
-                        self.link_info.set(self.link_type, 'password', common_func.encryption(
-                            self.text_password.GetValue(), 1))
-                        self.link_info.write(open('link_info.ini', 'r+', encoding="utf-8"))
-                    self.Destroy()
-                    MainGui(self.link_data, self.link_type)
-                    # self.is_main_start = 1
+                    if login_status is False:
+                        login_error(" Error: Invalid Username or Password ")
+                    else:
+                        if self.check_remeber.GetValue() is True:
+                            self.link_info.set(self.link_type, 'ip', self.text_host.GetValue())
+                            self.link_info.set(self.link_type, 'username', common_func.encryption(
+                                self.text_username.GetValue(), 1))
+                            self.link_info.set(self.link_type, 'password', common_func.encryption(
+                                self.text_password.GetValue(), 1))
+                            self.link_info.write(open('link_info.ini', 'r+', encoding="utf-8"))
+                        self.Destroy()
+                        MainGui(self.link_data, self.link_type)
+                        # self.is_main_start = 1
 
                 except Exception as e:
                     if ping(self.link_data['ip']):

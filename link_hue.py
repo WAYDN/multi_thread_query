@@ -119,6 +119,9 @@ class QueryHue:
             # 登录hue,获取新cookie的csrftoken
             self.login_data['csrfmiddlewaretoken'] = csrfmiddlewaretoken
             login_req = self.session_opener.post(url=self.login_url, data=self.login_data, headers=self.csrf_headers)
+            login_req_text = login_req.text
+            if re.search('errorlist nonfield', login_req_text):
+                raise Exception(re.search(r'errorlist nonfield"><li>(.+?)</li>', login_req_text).group(1))
             self.csrf_token = login_req.cookies['csrftoken']
             self.execute_headers['X-CSRFToken'] = self.csrf_token
             self.session_opener.post(url=self.explain_url, data=self.execute_data, headers=self.execute_headers)
@@ -381,8 +384,8 @@ if __name__ == '__main__':
     hue_info['username'] = common_func.encryption(hue_info['username'], 0)
     hue_info['password'] = common_func.encryption(hue_info['password'], 0)
     hue = QueryHue(hue_info, '123')
-    hue.login()
+    print(hue.login())
     # exec_sql=None, is_explain=0, download_path=None, exec_date=None, download_file_name=None
-    # hue.query(exec_sql="select tag_id, count(1),count(distinct user_id) from db_tag.dwd_user_tag_dd group by tag_id",
-    #           download_path='C:\\Users\\admin\\Desktop\\')
-    hue.watch('11705')
+    # hue.query(exec_sql="select 123", download_path='C:\\Users\\admin\\Desktop\\')
+    # hue.explain(exec_sql="select 123")
+    # hue.watch('11705')
