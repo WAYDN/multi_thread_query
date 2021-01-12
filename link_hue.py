@@ -120,8 +120,8 @@ class QueryHue:
             self.login_data['csrfmiddlewaretoken'] = csrfmiddlewaretoken
             login_req = self.session_opener.post(url=self.login_url, data=self.login_data, headers=self.csrf_headers)
             login_req_text = login_req.text
-            if re.search('errorlist nonfield', login_req_text):
-                raise Exception(re.search(r'errorlist nonfield"><li>(.+?)</li>', login_req_text).group(1))
+            if re.search('errorlist', login_req_text):
+                raise Exception(re.search(r'errorlist.*"><li>(.+?)</li>', login_req_text).group(1))
             self.csrf_token = login_req.cookies['csrftoken']
             self.execute_headers['X-CSRFToken'] = self.csrf_token
             self.session_opener.post(url=self.explain_url, data=self.execute_data, headers=self.execute_headers)
