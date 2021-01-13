@@ -295,10 +295,11 @@ class MainGui(wx.Frame):
         else:
             file_name = '{0}_{1}_{2}'.format(self.link_type.lower(), query_name, self.exec_date)
         log = open("{0}\\{1}.log".format(self.log_path, file_name), 'r')
+        # log = open("F:\\work\\tool\\mqt\\log\\hue_dwd_user_follow_stock_tag_dd_20210112.log", 'r')
         read_log = log.read()
         log.close()
         last_log = re.search(r'((.*\n)+.+(The end is the beginning!|#*线程修复#*)\n)?((.*\n)*?)$', read_log).group(4)
-        print(last_log)
+        # print(last_log)
         will_submit_list = [i[0] for i in re.findall(r'当前执行日期: ((\d-?)+)', last_log)]
         submit_dict = dict([(i[2], i[0]) for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 提交成功', last_log)])
         success_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 执行成功', last_log)]
@@ -376,6 +377,7 @@ class MainGui(wx.Frame):
         self.repair_list = list(set(self.repair_list))
         if len(self.repair_list) > 0:
             logging.warning("###############################线程修复###############################")
+            self.is_cancel = 0
             print(self.repair_list)
             self.dialog_repair.EndModal(wx.ID_OK)
             self.is_print_sql = 0

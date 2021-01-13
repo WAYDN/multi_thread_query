@@ -127,7 +127,7 @@ class QueryHue:
             self.session_opener.post(url=self.explain_url, data=self.execute_data, headers=self.execute_headers)
             return True
         except Exception as e:
-            logging.warning(e)
+            logging.debug('login-{0}'.format(e))
             return False
 
     def explain(self, exec_sql=None):
@@ -148,7 +148,7 @@ class QueryHue:
         else:
             logging.error(explain_reuslt['message'])
 
-    def watch(self, result_id):
+    def watch(self, result_id, exec_date=None):
         is_failure = False
         is_success = False
         watch_cnt = 0
@@ -164,10 +164,11 @@ class QueryHue:
                     # print(is_success is not True and is_failure is not True)
                     # logging.info("查询结果：{0},{1}".format(is_finished, result_data))
                 except Exception as e:
-                    logging.error('{0},{1}'.format(e, self.watch_url.format(result_id)))
+                    logging.error('{2} watch-{0},{1}'.format(e, self.watch_url.format(result_id), exec_date))
                     watch_cnt += 1
             else:
-                logging.error("url:{0},{1}".format(self.watch_url.format(result_id), str(watch_req.status_code)))
+                logging.error("{2} watch-url:{0},{1}".format(self.watch_url.format(result_id),
+                                                             str(watch_req.status_code), exec_date))
                 watch_cnt += 1
             time.sleep(5)
         # logging.info("查询结果：{0}".format(result['is_finished']))
@@ -211,7 +212,7 @@ class QueryHue:
 
         # 提交sql,并获取result_id
         commit_num = 0
-        while commit_num < 2:
+        while commit_num < 3:
             commit_num += 1
             execute_req = self.session_opener.post(url=self.execute_url, data=self.execute_data,
                                                    headers=self.execute_headers)
@@ -231,10 +232,10 @@ class QueryHue:
                     self.result_id_list[result_id] = 0
                     break
             else:
+                time.sleep(3)
                 continue
         else:
-            execute_result = json.loads(execute_req.text)
-            logging.error('{0} 提交失败 {1}'.format(exec_date, execute_result['message']))
+            logging.error('{0} 提交失败'.format(exec_date))
             exit(1)
 
         # 获取结果信息
@@ -301,16 +302,12 @@ class QueryHue:
         logging.info("<result_id:{0}> {2} 耗时 {1}".format(result_id, str(end_time-start_time), exec_date))
         return self.result
 
-    def query_thread(self, exec_sql, start_date, end_date, step=1, date_format='%Y%m%d', step_type='day', thread_num=2,
-                     download_path=None):
+    def query_thread(self, exec_sql, exec_date_list, date_format, thread_num=2, download_path=None):
         """
         多线程执行提交sql
         :param exec_sql: string/待执行的sql
-        :param start_date: string/开始日期
-        :param end_date: string/结束日期
-        :param step: int/时间跨度，默认1
+        :param exec_date_list: list/待执行日期组
         :param date_format: string/输入输出的时间格式，默认'%Y%m%d'
-        :param step_type: string/时间跨度周期类型，默认'day',否则为'month'
         :param thread_num: int/线程数
         :param download_path: string/结果下载路径，None表示不进行下载操作
         :return: 无，结果集以文件形式写入
@@ -325,11 +322,8 @@ class QueryHue:
 
         # 声明参数
         cnt_num = 0
-        # 此处的date_format与输入的时间格式一致
-        exec_date_list = common_func.exec_date(start_date=start_date, end_date=end_date, step=step,
-                                               date_format=date_format, step_type=step_type)
         exec_date_num = len(exec_date_list)
-
+        query_threading_list = []
         self.login()
         logging.info(exec_sql)
         for exec_date_value in exec_date_list:
@@ -344,7 +338,7 @@ class QueryHue:
             if cnt_num % thread_num == 0:
                 query_threading.join()
             # 避免提交过快导致提交重复
-            time.sleep(1)
+            time.sleep(3)
         query_threading.join()
         # time.sleep(1)
 
@@ -372,7 +366,7 @@ class QueryHue:
             result = running_data.text
         else:
             result = running_data.status_code
-        return(result)
+        return result
 
 
 if __name__ == '__main__':
@@ -386,6 +380,171 @@ if __name__ == '__main__':
     hue = QueryHue(hue_info, '123')
     print(hue.login())
     # exec_sql=None, is_explain=0, download_path=None, exec_date=None, download_file_name=None
-    # hue.query(exec_sql="select 123", download_path='C:\\Users\\admin\\Desktop\\')
+    sql = """
+insert  overwrite table db_tag.dwd_user_follow_stock_tag_dd partition (hp_stat_date = '#-1#')
+select  a.user_id,
+        a.last_visit_time, --最后查看时间
+        a.is_optional, --是否加入自选股
+        a.optional_time, --加入自选股时间
+        a.is_remind, --是否设置预警
+        a.stock_id, --股票id
+        a.stock_name, --股票名称
+        a.optional_cnt as optional_cnt, --个股关注度总数
+        a.visit_cnt_7d as visit_cnt_7d, --最近一周查看次数
+        a.frequency, --使用频次
+        cast(case when abs((a.score - a.avg_score) / a.stdp_score) > 2 then sign((a.score - a.avg_score) / a.stdp_score) * 2 * 25 + 50 else(a.score - a.avg_score) / a.stdp_score * 25 + 50
+                   end as string) as percent, --百分制
+        score, --原分值
+        a.market_id, --市场id
+        a.sec_type, --证券类型
+        a.rn, --排名
+        current_timestamp() as insert_time --插入时间
+  from  (
+        select  a.user_id,
+                a.scode_id as stock_id,
+                b.market_id,
+                b.sec_type,
+                b.name as stock_name,
+                a.last_visit_time,
+                case when a.is_optional = 1 then '是' else '否' end as is_optional,
+                a.optional_time,
+                null as is_remind,
+                a.optional_cnt,
+                a.visit_cnt_7d,
+                case when a.visit_cnt_7d < 3 then '低频率'
+                     when a.visit_cnt_7d < 9 then '中频率'
+                     else '高频率' end as frequency,
+                162 + a.ld_score + a.vc_score + a.cc_score + a.ctc_score + a.tc_score + a.io_score + a.iov_score as score,
+                avg(162 + a.ld_score + a.vc_score + a.cc_score + a.ctc_score + a.tc_score + a.io_score + a.iov_score) over (partition by 1) as avg_score,
+                stddev_pop(162 + a.ld_score + a.vc_score + a.cc_score + a.ctc_score + a.tc_score + a.io_score + a.iov_score) over (partition by 1) as stdp_score,
+                row_number() over (partition by a.user_id order by 162 + a.ld_score + a.vc_score + a.cc_score + a.ctc_score + a.tc_score + a.io_score + a.iov_score desc, a.last_visit_time desc, a.optional_time desc) as rn
+          from  (
+                select  a.user_id,
+                        a.scode_id,
+                        a.last_visit_time,
+                        a.is_optional,
+                        a.optional_time,
+                        a.optional_cnt,
+                        a.visit_cnt_7d,
+                        case when a.level_days <= 0 then 181
+                             when a.level_days <= 4 then 6
+                             when a.level_days <= 5 then - 40
+                             when a.level_days <= 6 then - 97
+                             when a.level_days <= 7 then - 139
+                              end as ld_score,
+                        case when a.visit_cnt_7d <= 0 then - 96
+                             when a.visit_cnt_7d <= 1 then - 50
+                             when a.visit_cnt_7d <= 2 then 15
+                             when a.visit_cnt_7d <= 3 then 53
+                             when a.visit_cnt_7d <= 8 then 114
+                             else 217 end as vc_score,
+                        case when a.change_cnt_7d <= 0 then - 5
+                             when a.change_cnt_7d <= 1 then 10
+                             else 22 end cc_score,
+                        case when a.click_tar_cnt_7d <= 0 then - 1 else 38 end ctc_score,
+                        case when a.times_cnt_7d <= 0 then - 65
+                             when a.times_cnt_7d <= 1 then - 22
+                             when a.times_cnt_7d <= 2 then 50
+                             else 125 end as tc_score,
+                        case when a.is_optional = 0 then - 203 else 75 end as io_score,
+                        case when a.is_optional_visit = 0 then - 1 else 25 end as iov_score
+                  from  (
+                        select  coalesce(a.user_id, b.user_id) as user_id,
+                                coalesce(a.scode_id, b.sdtseccode) as scode_id,
+                                coalesce(a.level_days, 7) as level_days,
+                                coalesce(a.visit_days_7d, 0) as visit_days_7d,
+                                coalesce(a.visit_cnt_7d, 0) as visit_cnt_7d,
+                                coalesce(a.change_cnt_7d, 0) as change_cnt_7d,
+                                coalesce(a.click_tabbar_cnt_7d, 0) as click_tabbar_cnt_7d,
+                                coalesce(a.click_tar_cnt_7d, 0) as click_tar_cnt_7d,
+                                coalesce(a.times_cnt_7d, 0) as times_cnt_7d,
+                                case when b.sdtseccode is not null then 1 else 0 end as is_optional,
+                                coalesce(b.optional_time, '') as optional_time,
+                                coalesce(a.last_visit_time, '') as last_visit_time,
+                                coalesce(b.optional_cnt, 0) as optional_cnt,
+                                coalesce(b.is_optional_visit, 0) as is_optional_visit
+                          from  (
+                                select  user_id,
+                                        scode_id,
+                                        max(createtime) as last_visit_time,
+                                        min(datediff(date_sub(to_date('#0#'), 1), hp_stat_date)) as level_days,
+                                        count(distinct hp_stat_date) as visit_days_7d,
+                                        count(case when objects rlike '\\.\\d*(now|day|week|month|min)$' then 1 end) as change_cnt_7d,
+                                        count(distinct case when date_format(createtime, 'HH:mm:ss') between '09:30:00' and '11:30:00' then concat(hp_stat_date, '2')
+                                                            when date_format(createtime, 'HH:mm:ss') between '13:30:00' and '15:00:00' then concat(hp_stat_date, '2')
+                                                            else concat(hp_stat_date, '3') end) as times_cnt_7d,
+                                        count(case when objects = 'gzg_fenshi' and action_type = 0 then 1 end) as visit_cnt_7d,
+                                        count(case when objects rlike '^gzg_fenshi\\.tabbar' then 1 end) as click_tabbar_cnt_7d,
+                                        count(case when objects rlike '^gzg_fenshi\\.tar\\.\\d+\\.change' then 1 end) as click_tar_cnt_7d
+                                  from  pdw.fact_stock_client_log
+                                 where  hp_stat_date >= date_sub(to_date('#0#'), 7)
+                                   and  hp_stat_date <= date_sub(to_date('#0#'), 1)
+                                   and  tenant_id = 'YYZQZX'
+                                   and  start_object = 'gzg_fenshi'
+                                   and  user_id <> 0
+                                   and  scode_id is not null
+                                 group  by user_id,
+                                        scode_id
+                                ) a
+                          full  join (
+                                select  a.user_id,
+                                        a.sdtseccode,
+                                        a.optional_time,
+                                        case when c.user_id is not null then 1 else 0 end as is_optional_visit,
+                                        count(1) over (partition by a.user_id) as optional_cnt
+                                  from  (
+                                        select  user_id,
+                                                sdtseccode,
+                                                max(start_time) as optional_time
+                                          from  db_temp_dt.t_optional_shares_his_news
+                                         where  user_id rlike '^\\d+$'
+                                           and  user_id <> 0
+                                           and  to_date(start_time) <= date_sub(to_date('#0#'), 1)
+										   and  to_date(end_time) >= date_sub(to_date('#0#'), 7)
+										 group  by user_id,
+												sdtseccode
+                                        ) a
+                                 inner  join (
+                                        select  user_id
+                                          from  pdw.fact_cnt_stock_login_log
+                                         where  hp_stat_date >= date_sub(to_date('#0#'), 7)
+                                           and  hp_stat_date <= date_sub(to_date('#0#'), 1)
+                                           and  tenant_id = 'YYZQZX'
+                                           and  user_id <> 0
+                                         group  by user_id
+                                        ) b
+                                    on  a.user_id = b.user_id
+                                  left  join (
+                                        select  user_id
+                                          from  pdw.fact_stock_client_log
+                                         where  hp_stat_date >= date_sub(to_date('#0#'), 7)
+                                           and  hp_stat_date <= date_sub(to_date('#0#'), 1)
+                                           and  tenant_id = 'YYZQZX'
+                                           and  start_object = 'gzg_zixuan'
+                                           and  user_id <> 0
+                                           and  scode_id is not null
+                                         group  by user_id
+                                        ) c
+                                    on  a.user_id = c.user_id
+                                ) b
+                            on  a.user_id = b.user_id
+                           and  a.scode_id = b.sdtseccode
+                        ) a
+                ) a
+         inner  join (
+                select  code,
+                        name,
+           				market_id,
+           			    sec_type
+                  from  pdw.dim_stock_dict
+                 where  sec_type in ('01', '07')
+                   and  status = 1
+                ) b
+            on  a.scode_id = b.code
+        ) a
+ where  a.rn <= 10;
+    """
+    date_list = ['2020-03-27', '2020-06-28', '2020-08-12']
+    hue.query_thread(exec_sql=sql, exec_date_list=date_list, date_format="%Y-%m-%d", thread_num=3)
     # hue.explain(exec_sql="select 123")
     # hue.watch('11705')
