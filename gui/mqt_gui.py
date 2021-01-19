@@ -105,14 +105,14 @@ class MainGui(wx.Frame):
         self.dialog_repair.SetIcon(wx.Icon('image\\mqt.ico'))
         self.dialog_repair.Center()
         self.dialog_repair_panel = wx.Panel(self.dialog_repair)
-        self.check_lose = wx.CheckBox(self.dialog_repair_panel, label="尚未提交")
-        self.check_submit_error = wx.CheckBox(self.dialog_repair_panel, label="提交异常")
-        self.check_fail = wx.CheckBox(self.dialog_repair_panel, label="执行错误")
+        self.check_lose = wx.CheckBox(parent=self.dialog_repair_panel, id=10001, label="尚未提交")
+        self.check_submit_error = wx.CheckBox(parent=self.dialog_repair_panel, id=10002, label="提交异常")
+        self.check_exec_fail = wx.CheckBox(parent=self.dialog_repair_panel, id=10003, label="执行错误")
         self.button_repair = wx.Button(self.dialog_repair_panel, label="重新提交")
         self.dialog_repair_vbox = wx.BoxSizer(wx.VERTICAL)
         self.dialog_repair_vbox.Add(self.check_lose, flag=wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, border=3)
         self.dialog_repair_vbox.Add(self.check_submit_error, flag=wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, border=3)
-        self.dialog_repair_vbox.Add(self.check_fail, flag=wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, border=3)
+        self.dialog_repair_vbox.Add(self.check_exec_fail, flag=wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, border=3)
         self.dialog_repair_vbox.Add(self.button_repair, flag=wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, border=3)
         self.dialog_repair_hbox = wx.BoxSizer()
         self.dialog_repair_hbox.Add(self.dialog_repair_vbox, proportion=1, flag=wx.ALIGN_CENTER)
@@ -123,14 +123,20 @@ class MainGui(wx.Frame):
         # logging.warning('123')
 
         # 绑定执行事件
-        self.Bind(wx.EVT_CLOSE, self.is_close)
+        self.Bind(wx.EVT_CLOSE, self.app_close)
         self.button_explain.Bind(wx.EVT_BUTTON, self.sql_explain)
         self.button_exec.Bind(wx.EVT_BUTTON, self.sql_exec)
         self.button_cancel.Bind(wx.EVT_BUTTON, self.suicide)
-        self.button_help.Bind(wx.EVT_ENTER_WINDOW, self.label_help_show)
-        self.button_help.Bind(wx.EVT_LEAVE_WINDOW, self.label_help_close)
+        self.button_help.Bind(wx.EVT_ENTER_WINDOW, self.help_show)
+        self.button_help.Bind(wx.EVT_LEAVE_WINDOW, self.help_close)
         self.button_repair.Bind(wx.EVT_BUTTON, self.repair)
-        self.dialog_repair.Bind(wx.EVT_CLOSE, self.repair_close)
+        self.dialog_repair.Bind(wx.EVT_CLOSE, self.dialog_repair_close)
+        self.check_lose.Bind(wx.EVT_ENTER_WINDOW, self.label_repair_show)
+        self.check_submit_error.Bind(wx.EVT_ENTER_WINDOW, self.label_repair_show)
+        self.check_exec_fail.Bind(wx.EVT_ENTER_WINDOW, self.label_repair_show)
+        self.check_lose.Bind(wx.EVT_LEAVE_WINDOW, self.label_repair_close)
+        self.check_submit_error.Bind(wx.EVT_LEAVE_WINDOW, self.label_repair_close)
+        self.check_exec_fail.Bind(wx.EVT_LEAVE_WINDOW, self.label_repair_close)
 
         # 页面布置
         main_hbox_config_1 = wx.BoxSizer()
@@ -301,7 +307,7 @@ class MainGui(wx.Frame):
         last_log = re.search(r'((.*\n)+.+(The end is the beginning!|#*线程修复#*)\n)?((.*\n)*?)$', read_log).group(4)
         # print(last_log)
         will_submit_list = [i[0] for i in re.findall(r'当前执行日期: ((\d-?)+)', last_log)]
-        submit_dict = dict([(i[2], i[0]) for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 提交成功', last_log)])
+        submit_dict = dict([(i[2], i[0]) for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) (重新)?提交成功', last_log)])
         success_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 执行成功', last_log)]
         self.exec_fail_list = [i[2] for i in re.findall(r'result_id:((\w-?)+)> ((\d-?)+) 执行失败', last_log)]
         if self.is_cancel == 1:
@@ -336,7 +342,11 @@ class MainGui(wx.Frame):
             logging.warning("{0} 本次执行失败的日期:{1}".format(query_name, ','.join(self.exec_fail_list)))
             repair_status += 4
 
+        end_time = datetime.datetime.now()
+        logging.info("{0} 累计耗时 {1}".format(query_name, str(end_time-start_time)).lstrip())
+
         # 错误日期再次提交
+        print(repair_status)
         if repair_status > 0:
             dr = self.dialog_repair.ShowModal()
             if dr == wx.EVT_CLOSE or dr == wx.ID_YES:
@@ -349,9 +359,6 @@ class MainGui(wx.Frame):
             pass
 
         # 线程结束
-        time.sleep(5)
-        end_time = datetime.datetime.now()
-        logging.info("{0} 累计耗时 {1}".format(query_name, str(end_time-start_time)).lstrip())
         logging.info("The end is the beginning!")
 
         self.button_exec.SetLabel("执行")
@@ -371,7 +378,7 @@ class MainGui(wx.Frame):
         if self.check_submit_error.GetValue() is True:
             for submit_error in self.submit_error_list:
                 self.repair_list.append(submit_error)
-        if self.check_fail.GetValue() is True:
+        if self.check_exec_fail.GetValue() is True:
             for exec_fail in self.exec_fail_list:
                 self.repair_list.append(exec_fail)
         self.repair_list = list(set(self.repair_list))
@@ -383,7 +390,7 @@ class MainGui(wx.Frame):
             self.is_print_sql = 0
             self.sql_exec(event)
         else:
-            self.dialog_repair.Destroy()
+            self.dialog_repair.EndModal(wx.ID_OK)
             logging.warning("线程无需修复")
             logging.info("The end is the beginning!")
             self.button_exec.SetLabel("执行")
@@ -394,11 +401,33 @@ class MainGui(wx.Frame):
                 dialog_close.ShowModal()
         return self.repair_list
 
-    def repair_close(self, event):
+    def dialog_repair_close(self, event):
         self.dialog_repair.EndModal(wx.ID_OK)
         print('线程修复关闭')
         logging.info("The end is the beginning!")
         self.button_exec.SetLabel("执行")
+
+    def label_repair_show(self, event):
+        global label_repair
+        label_repair = wx.StaticText(self.dialog_repair)
+        label_repair_pos = ()
+        if event.GetId() == 10001:
+            label_repair.SetLabel('{0}'.format(len(self.submit_lose_list)))
+            label_repair_pos = (self.check_lose.GetPosition()[0] + self.check_lose.GetSize()[0],
+                                self.check_lose.GetPosition()[1])
+        elif event.GetId() == 10002:
+            label_repair.SetLabel('{0}'.format(len(self.submit_error_list)))
+            label_repair_pos = (self.check_submit_error.GetPosition()[0] + self.check_submit_error.GetSize()[0],
+                                self.check_submit_error.GetPosition()[1])
+        elif event.GetId() == 10003:
+            label_repair.SetLabel('{0}'.format(len(self.exec_fail_list)))
+            label_repair_pos = (self.check_exec_fail.GetPosition()[0] + self.check_exec_fail.GetSize()[0],
+                                self.check_exec_fail.GetPosition()[1])
+        label_repair.SetPosition(label_repair_pos)
+
+    def label_repair_close(self, event):
+        global label_repair
+        label_repair.Destroy()
 
     @thread_decorator
     def suicide(self, event):
@@ -455,7 +484,7 @@ class MainGui(wx.Frame):
             pass
         self.button_exec.SetLabel("执行")
 
-    def is_close(self, event):
+    def app_close(self, event):
         """主框架窗口关闭提醒"""
         if len(self.verse) > 1:
             pass
@@ -488,7 +517,7 @@ class MainGui(wx.Frame):
             pass
         self.verse = common_func.get_verse()
 
-    def label_help_show(self, event):
+    def help_show(self, event):
         global label_help
         label_help = wx.StaticText(self.main_panel)
         label_help.SetLabel(u"""
@@ -506,7 +535,7 @@ class MainGui(wx.Frame):
         label_help.SetBackgroundColour('#3299CC')
         label_help.SetForegroundColour('white')
 
-    def label_help_close(self, event):
+    def help_close(self, event):
         global label_help
         label_help.Destroy()
 
